@@ -1,4 +1,4 @@
-# ChatVerse - Real-Time AI Chat Application
+# HANASU - Real-Time AI Chat Application
 
 A production-ready real-time chat application with integrated AI assistance. Built with the MERN stack (MongoDB, Express, React, Node.js) and Socket.IO.
 
