@@ -158,7 +158,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <img src={user.avatar} alt="Avatar" className="w-12 h-12 rounded-full border border-white/10 p-0.5 object-cover" />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-bamboo rounded-full border border-[var(--bg-primary)]"></div>
+                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--bg-panel)] ${socket ? 'bg-green-400' : 'bg-red-500'}`}></div>
                     </div>
                     <div>
                         <h3 className="font-medium text-[var(--text-primary)] tracking-wide">{user.name}</h3>
@@ -238,7 +238,10 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     : 'hover:bg-white/5 border-transparent'
                                     }`}
                             >
-                                <img src={friend.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-transparent group-hover:border-[var(--accent-primary)]/50" />
+                                <div className="relative flex-shrink-0">
+                                    <img src={friend.avatar} alt="Avatar" className="w-10 h-10 rounded-full" />
+                                    <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-primary)] ${onlineUsers.has(friend.id) ? 'bg-green-400' : 'bg-red-500'}`}></div>
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="text-sm text-[var(--text-primary)] font-medium truncate">{friend.name}</h4>
                                     <div className="flex items-center gap-2">
