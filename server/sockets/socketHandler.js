@@ -1,4 +1,4 @@
-const Message = require('../models/Message');
+const { prisma } = require('../config/db');
 
 const onlineUsers = new Set();
 
@@ -29,25 +29,41 @@ const socketHandler = (io) => {
 
             try {
                 // Save to Database
-                const newMessage = await Message.create({
-                    sender: senderId,
-                    receiver: receiverId,
-                    content,
-                    read: false,
+                const newMessage = await prisma.message.create({
+                    data: {
+                        senderId,
+                        receiverId,
+                        content,
+                        read: false,
+                    },
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true
+                            }
+                        },
+                        receiver: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true
+                            }
+                        }
+                    }
                 });
 
                 // Emit to receiver
                 io.to(receiverId).emit('receive_message', newMessage);
 
-                // Also emit back to sender to confirm/append? 
-                // Typically the sender appends optimistically or waits for this.
-                // We can emit 'message_sent' or just let the sender handle it.
-                // Using 'receive_message' for the sender too if they have multiple tabs open?
-                // Let's emit to the sender's room too so all their devices update.
+                // Also emit back to sender to confirm/append
+                // This ensures all sender's devices/tabs update
                 io.to(senderId).emit('receive_message', newMessage);
 
             } catch (error) {
                 console.error('Error saving message:', error);
+                socket.emit('message_error', { error: 'Failed to send message' });
             }
         });
 

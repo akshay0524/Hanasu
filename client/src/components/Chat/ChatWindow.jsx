@@ -17,7 +17,7 @@ const ChatWindow = ({ chat, onBack }) => {
         if (!chat) return;
         const loadHistory = async () => {
             try {
-                const data = await getChatHistory(chat._id);
+                const data = await getChatHistory(chat.id);
                 setMessages(data);
             } catch (error) { console.error(error); }
         };
@@ -26,15 +26,15 @@ const ChatWindow = ({ chat, onBack }) => {
         if (socket) {
             socket.on('receive_message', (newMessage) => {
                 if (
-                    (newMessage.sender === chat._id && newMessage.receiver === user._id) ||
-                    (newMessage.sender === user._id && newMessage.receiver === chat._id)
+                    (newMessage.sender === chat.id && newMessage.receiver === user.id) ||
+                    (newMessage.sender === user.id && newMessage.receiver === chat.id)
                 ) {
                     setMessages((prev) => [...prev, newMessage]);
                 }
             });
         }
         return () => { if (socket) socket.off('receive_message'); }
-    }, [chat, socket, user._id]);
+    }, [chat, socket, user.id]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,11 +46,11 @@ const ChatWindow = ({ chat, onBack }) => {
         if (!socket) return;
 
         socket.on('typing', ({ senderId }) => {
-            if (senderId === chat._id) setIsTyping(true);
+            if (senderId === chat.id) setIsTyping(true);
         });
 
         socket.on('stop_typing', ({ senderId }) => {
-            if (senderId === chat._id) setIsTyping(false);
+            if (senderId === chat.id) setIsTyping(false);
         });
 
         return () => {
@@ -64,12 +64,12 @@ const ChatWindow = ({ chat, onBack }) => {
         setInput(e.target.value);
         if (!socket) return;
 
-        socket.emit('typing', { senderId: user._id, receiverId: chat._id });
+        socket.emit('typing', { senderId: user.id, receiverId: chat.id });
 
         if (typingTimeout) clearTimeout(typingTimeout);
 
         typingTimeout = setTimeout(() => {
-            socket.emit('stop_typing', { senderId: user._id, receiverId: chat._id });
+            socket.emit('stop_typing', { senderId: user.id, receiverId: chat.id });
         }, 2000);
     };
 
@@ -77,9 +77,9 @@ const ChatWindow = ({ chat, onBack }) => {
         e.preventDefault();
         if (!input.trim()) return;
         if (socket) {
-            const msgData = { senderId: user._id, receiverId: chat._id, content: input };
+            const msgData = { senderId: user.id, receiverId: chat.id, content: input };
             socket.emit('send_message', msgData);
-            socket.emit('stop_typing', { senderId: user._id, receiverId: chat._id }); // Stop immediately on send
+            socket.emit('stop_typing', { senderId: user.id, receiverId: chat.id }); // Stop immediately on send
         }
         setInput('');
     };
@@ -89,7 +89,7 @@ const ChatWindow = ({ chat, onBack }) => {
     const handleUnfriend = async () => {
         if (window.confirm(`Are you sure you want to remove ${chat.name}?`)) {
             try {
-                await removeFriend(chat._id);
+                await removeFriend(chat.id);
                 onBack(); // Go back to list
                 window.location.reload(); // Refresh to update list
             } catch (error) {
@@ -113,8 +113,8 @@ const ChatWindow = ({ chat, onBack }) => {
                         <img src={chat.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
                         <div>
                             <h3 className="font-medium text-[var(--text-primary)] text-sm">{chat.name}</h3>
-                            <span className={`text-[10px] block ${onlineUsers?.has(chat._id) ? 'text-green-400' : 'text-gray-500'}`}>
-                                {onlineUsers?.has(chat._id) ? 'Online' : 'Offline'}
+                            <span className={`text-[10px] block ${onlineUsers?.has(chat.id) ? 'text-green-400' : 'text-gray-500'}`}>
+                                {onlineUsers?.has(chat.id) ? 'Online' : 'Offline'}
                             </span>
                         </div>
                     </div>
@@ -144,7 +144,7 @@ const ChatWindow = ({ chat, onBack }) => {
             <div className="flex-1 overflow-y-auto p-4 pt-24 pb-4 space-y-3 custom-scrollbar">
                 <AnimatePresence initial={false}>
                     {messages.map((msg, index) => {
-                        const isMe = msg.sender === user._id;
+                        const isMe = msg.sender === user.id;
                         return (
                             <motion.div
                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}

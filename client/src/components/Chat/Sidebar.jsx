@@ -15,6 +15,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
     const [query, setQuery] = useState('');
     const [searchResult, setSearchResult] = useState(null);
     const [unread, setUnread] = useState({});
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchFriends();
@@ -36,10 +37,10 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
 
         const handleMessage = (msg) => {
             // 1. Reorder Logic: Move conversation to top
-            const partnerId = msg.sender === user._id ? msg.receiver : msg.sender;
+            const partnerId = msg.sender === user.id ? msg.receiver : msg.sender;
 
             setFriends(prev => {
-                const index = prev.findIndex(f => f._id === partnerId);
+                const index = prev.findIndex(f => f.id === partnerId);
                 if (index > -1) {
                     const newFriends = [...prev];
                     const [friend] = newFriends.splice(index, 1);
@@ -50,7 +51,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             });
 
             // 2. Notification Logic (Only if I am receiver and chat is not open)
-            if (msg.sender !== user._id && activeChat?._id !== msg.sender) { // If I sent it, don't notify myself
+            if (msg.sender !== user.id && activeChat?.id !== msg.sender) { // If I sent it, don't notify myself
 
                 // Update unread count
                 setUnread(prev => ({
@@ -73,7 +74,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                     // However, we need 'friends' list here to get the name.
                     // To be safe, we can just use "New Message" or fetch fresh 'friends' via a ref if simple closure capture fails. 
                     // Since 'friends' is in dependency array [socket, activeChat, friends], this closure IS fresh.
-                    const friend = friends.find(f => f._id === msg.sender);
+                    const friend = friends.find(f => f.id === msg.sender);
                     const name = friend ? friend.name : "New Message";
 
                     const notification = new Notification(name, {
@@ -100,14 +101,14 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             window.removeEventListener('click', enableAudio);
             window.removeEventListener('keydown', enableAudio);
         };
-    }, [socket, activeChat, friends, user._id]); // Add user._id just in case
+    }, [socket, activeChat, friends, user.id]); // Add user._id just in case
 
     // Clear unread when chat opens
     useEffect(() => {
         if (activeChat && activeChat.type === 'friend') {
             setUnread(prev => {
                 const newUnread = { ...prev };
-                delete newUnread[activeChat._id];
+                delete newUnread[activeChat.id];
                 return newUnread;
             });
         }
@@ -230,9 +231,9 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                         {friends.length === 0 && <p className="text-center text-[var(--text-secondary)] text-xs italic mt-8">Silence is golden,<br />but friends are better.</p>}
                         {friends.map(friend => (
                             <div
-                                key={friend._id}
+                                key={friend.id}
                                 onClick={() => onSelectChat({ type: 'friend', ...friend })}
-                                className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?.id === friend._id
+                                className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?.id === friend.id
                                     ? 'bg-white/10 border-white/10'
                                     : 'hover:bg-white/5 border-transparent'
                                     }`}
@@ -242,14 +243,14 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     <h4 className="text-sm text-[var(--text-primary)] font-medium truncate">{friend.name}</h4>
                                     <div className="flex items-center gap-2">
                                         <p className="text-[10px] text-[var(--text-secondary)] truncate">{friend.userTag}</p>
-                                        <span className={`text-[10px] font-medium ${onlineUsers.has(friend._id) ? 'text-green-400' : 'text-gray-500'}`}>
-                                            {onlineUsers.has(friend._id) ? 'Online' : 'Offline'}
+                                        <span className={`text-[10px] font-medium ${onlineUsers.has(friend.id) ? 'text-green-400' : 'text-gray-500'}`}>
+                                            {onlineUsers.has(friend.id) ? 'Online' : 'Offline'}
                                         </span>
                                     </div>
                                 </div>
-                                {unread[friend._id] > 0 && (
+                                {unread[friend.id] > 0 && (
                                     <div className="w-5 h-5 bg-[var(--accent-primary)] rounded-full flex items-center justify-center text-[10px] text-white font-bold shadow-lg shadow-[var(--accent-glow)] animate-bounce cursor-default">
-                                        {unread[friend._id]}
+                                        {unread[friend.id]}
                                     </div>
                                 )}
                             </div>
@@ -260,7 +261,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                 {tab === 'requests' && (
                     <div className="space-y-3">
                         {requests.map(req => (
-                            <div key={req._id} className="p-4 bg-[var(--bg-panel)] rounded-xl border border-white/5 backdrop-blur-sm">
+                            <div key={req.id} className="p-4 bg-[var(--bg-panel)] rounded-xl border border-white/5 backdrop-blur-sm">
                                 <div className="flex items-center gap-3 mb-3">
                                     <img src={req.sender.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
                                     <div>
@@ -268,8 +269,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => acceptFriendRequest(req._id).then(() => { fetchRequests(); fetchFriends(); })} className="flex-1 bg-bamboo/20 text-bamboo hover:bg-bamboo/30 py-1.5 rounded text-xs transition">Accept</button>
-                                    <button onClick={() => rejectFriendRequest(req._id).then(fetchRequests)} className="flex-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 py-1.5 rounded text-xs transition">Dismiss</button>
+                                    <button onClick={() => acceptFriendRequest(req.id).then(() => { fetchRequests(); fetchFriends(); })} className="flex-1 bg-bamboo/20 text-bamboo hover:bg-bamboo/30 py-1.5 rounded text-xs transition">Accept</button>
+                                    <button onClick={() => rejectFriendRequest(req.id).then(fetchRequests)} className="flex-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 py-1.5 rounded text-xs transition">Dismiss</button>
                                 </div>
                             </div>
                         ))}
@@ -297,15 +298,15 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                 <h4 className="text-[var(--text-primary)] font-medium">{searchResult.name}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] font-mono mb-4">{searchResult.userTag}</p>
                                 <button
-                                    onClick={() => handleSendRequest(searchResult._id)}
+                                    onClick={() => handleSendRequest(searchResult.id)}
                                     disabled={searchResult.requestSent || searchResult.isFriend || searchResult.hasPendingRequest}
                                     className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-all ${searchResult.isFriend
-                                            ? 'bg-white/10 text-white cursor-default'
-                                            : searchResult.hasPendingRequest
-                                                ? 'bg-indigo-500/20 text-indigo-300 cursor-default'
-                                                : searchResult.requestSent
-                                                    ? 'bg-green-500/20 text-green-400 cursor-default'
-                                                    : 'bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] hover:bg-[var(--accent-hover)]'
+                                        ? 'bg-white/10 text-white cursor-default'
+                                        : searchResult.hasPendingRequest
+                                            ? 'bg-indigo-500/20 text-indigo-300 cursor-default'
+                                            : searchResult.requestSent
+                                                ? 'bg-green-500/20 text-green-400 cursor-default'
+                                                : 'bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] hover:bg-[var(--accent-hover)]'
                                         }`}
                                 >
                                     {searchResult.isFriend ? 'Already Friends' :

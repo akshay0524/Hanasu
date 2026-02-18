@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const AIChat = require('../models/AIChat');
+const { prisma } = require('../config/db');
 
 // Initialize OpenAI only if key exists (prevents crash on start if missing)
 let openai;
@@ -23,18 +23,29 @@ const chatWithAI = async (req, res) => {
 
     try {
         // 1. Get or create chat history
-        let aiChat = await AIChat.findOne({ user: req.user._id });
+        let aiChat = await prisma.aIChat.findUnique({
+            where: { userId: req.user.id },
+            include: {
+                messages: {
+                    orderBy: { timestamp: 'asc' },
+                    take: -10 // Last 10 messages
+                }
+            }
+        });
 
         if (!aiChat) {
-            aiChat = await AIChat.create({
-                user: req.user._id,
-                messages: [],
+            aiChat = await prisma.aIChat.create({
+                data: {
+                    userId: req.user.id,
+                },
+                include: {
+                    messages: true
+                }
             });
         }
 
         // 2. Prepare context for AI
-        // We'll take the last 10 messages to keep context but save tokens
-        const historyContext = aiChat.messages.slice(-10).map(msg => ({
+        const historyContext = aiChat.messages.map(msg => ({
             role: msg.role,
             content: msg.content
         }));
@@ -61,17 +72,29 @@ const chatWithAI = async (req, res) => {
             }
         }
 
-        // 4. Save to DB
-        aiChat.messages.push({ role: 'user', content: message });
-        aiChat.messages.push({ role: 'assistant', content: aiResponseContent });
+        // 4. Save to DB using transaction
+        const [userMessage, assistantMessage] = await prisma.$transaction([
+            prisma.aIMessage.create({
+                data: {
+                    chatId: aiChat.id,
+                    role: 'user',
+                    content: message
+                }
+            }),
+            prisma.aIMessage.create({
+                data: {
+                    chatId: aiChat.id,
+                    role: 'assistant',
+                    content: aiResponseContent
+                }
+            })
+        ]);
 
-        await aiChat.save();
-
-        // Return the new response
+        // Return the assistant's response
         res.json({
             role: 'assistant',
             content: aiResponseContent,
-            timestamp: new Date() // Approximate
+            timestamp: assistantMessage.timestamp
         });
 
     } catch (error) {
@@ -85,10 +108,19 @@ const chatWithAI = async (req, res) => {
 // @access  Private
 const getAIHistory = async (req, res) => {
     try {
-        const aiChat = await AIChat.findOne({ user: req.user._id });
+        const aiChat = await prisma.aIChat.findUnique({
+            where: { userId: req.user.id },
+            include: {
+                messages: {
+                    orderBy: { timestamp: 'asc' }
+                }
+            }
+        });
+
         if (!aiChat) {
             return res.json([]);
         }
+
         res.json(aiChat.messages);
     } catch (error) {
         res.status(500).json({ message: error.message });

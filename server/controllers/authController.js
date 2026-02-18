@@ -1,5 +1,5 @@
 const { OAuth2Client } = require('google-auth-library');
-const User = require('../models/User');
+const { prisma } = require('../config/db');
 const generateToken = require('../utils/generateToken');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -12,7 +12,9 @@ const generateUserTag = async () => {
         // Generate 4 digit hex string
         tag = '#' + Math.floor(Math.random() * 0xffff).toString(16).toUpperCase().padStart(4, '0');
         // Check if exists
-        const existingUser = await User.findOne({ userTag: tag });
+        const existingUser = await prisma.user.findUnique({
+            where: { userTag: tag }
+        });
         if (!existingUser) {
             isUnique = true;
         }
@@ -34,27 +36,31 @@ const authGoogle = async (req, res) => {
 
         const { name, email, picture, sub } = ticket.getPayload();
 
-        let user = await User.findOne({ googleId: sub });
+        let user = await prisma.user.findUnique({
+            where: { googleId: sub }
+        });
 
         if (!user) {
             // Create new user
             const userTag = await generateUserTag();
-            user = await User.create({
-                name,
-                email,
-                googleId: sub,
-                avatar: picture,
-                userTag,
+            user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    googleId: sub,
+                    avatar: picture || '',
+                    userTag,
+                }
             });
         }
 
         res.json({
-            _id: user._id,
+            id: user.id,
             name: user.name,
             email: user.email,
             userTag: user.userTag,
             avatar: user.avatar,
-            token: generateToken(user._id),
+            token: generateToken(user.id),
         });
     } catch (error) {
         console.error(error);
@@ -66,16 +72,33 @@ const authGoogle = async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = async (req, res) => {
-    const user = await User.findById(req.user._id);
+    const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        include: {
+            friends: {
+                include: {
+                    friend: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            userTag: true,
+                            avatar: true
+                        }
+                    }
+                }
+            }
+        }
+    });
 
     if (user) {
         res.json({
-            _id: user._id,
+            id: user.id,
             name: user.name,
             email: user.email,
             userTag: user.userTag,
             avatar: user.avatar,
-            friends: user.friends,
+            friends: user.friends.map(f => f.friend),
         });
     } else {
         res.status(404).json({ message: 'User not found' });
