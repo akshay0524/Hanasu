@@ -1,4 +1,6 @@
 const Message = require('../models/Message');
+const Conversation = require('../models/Conversation');
+const User = require('../models/User');
 
 const onlineUsers = new Set();
 
@@ -7,12 +9,19 @@ const socketHandler = (io) => {
         console.log(`User Connected: ${socket.id}`);
 
         // Join a room based on user ID
-        socket.on('join_room', (userId) => {
+        socket.on('join_room', async (userId) => {
             socket.join(userId);
             socket.userId = userId; // Store userId on socket for disconnect handling
 
             // Add to online users
             onlineUsers.add(userId);
+
+            // Update lastSeen
+            try {
+                await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+            } catch (err) {
+                console.error('Error updating lastSeen:', err.message);
+            }
 
             // Broadcast to all users that this user is online
             io.emit('user_status_change', { userId, status: 'online' });
@@ -36,14 +45,18 @@ const socketHandler = (io) => {
                     read: false,
                 });
 
+                // Update the conversation's last message
+                try {
+                    await Conversation.updateLastMessage(senderId, receiverId, newMessage._id);
+                } catch (convErr) {
+                    console.error('Error updating conversation:', convErr.message);
+                    // Non-critical: don't fail the message send
+                }
+
                 // Emit to receiver
                 io.to(receiverId).emit('receive_message', newMessage);
 
-                // Also emit back to sender to confirm/append? 
-                // Typically the sender appends optimistically or waits for this.
-                // We can emit 'message_sent' or just let the sender handle it.
-                // Using 'receive_message' for the sender too if they have multiple tabs open?
-                // Let's emit to the sender's room too so all their devices update.
+                // Emit to the sender's room too so all their devices update
                 io.to(senderId).emit('receive_message', newMessage);
 
             } catch (error) {
@@ -62,10 +75,18 @@ const socketHandler = (io) => {
             io.to(receiverId).emit('stop_typing', { senderId });
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             if (socket.userId) {
                 onlineUsers.delete(socket.userId);
                 io.emit('user_status_change', { userId: socket.userId, status: 'offline' });
+
+                // Update lastSeen on disconnect
+                try {
+                    await User.findByIdAndUpdate(socket.userId, { lastSeen: new Date() });
+                } catch (err) {
+                    console.error('Error updating lastSeen on disconnect:', err.message);
+                }
+
                 console.log(`User ${socket.userId} disconnected`);
             }
             console.log('User Disconnected', socket.id);

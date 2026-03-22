@@ -29,7 +29,7 @@ const ChatHome = () => {
             {/* Main Chat Area (Full width on mobile, Flex-1 on Desktop) */}
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={activeChat ? activeChat.id : 'empty'}
+                    key={activeChat ? (activeChat._id || activeChat.id) : 'empty'}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}

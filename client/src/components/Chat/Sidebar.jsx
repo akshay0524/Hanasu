@@ -15,6 +15,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
     const [query, setQuery] = useState('');
     const [searchResult, setSearchResult] = useState(null);
     const [unread, setUnread] = useState({});
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchFriends();
@@ -232,7 +233,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                             <div
                                 key={friend._id}
                                 onClick={() => onSelectChat({ type: 'friend', ...friend })}
-                                className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?.id === friend._id
+                                className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?._id === friend._id
                                     ? 'bg-white/10 border-white/10'
                                     : 'hover:bg-white/5 border-transparent'
                                     }`}
@@ -300,12 +301,12 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     onClick={() => handleSendRequest(searchResult._id)}
                                     disabled={searchResult.requestSent || searchResult.isFriend || searchResult.hasPendingRequest}
                                     className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-all ${searchResult.isFriend
-                                            ? 'bg-white/10 text-white cursor-default'
-                                            : searchResult.hasPendingRequest
-                                                ? 'bg-indigo-500/20 text-indigo-300 cursor-default'
-                                                : searchResult.requestSent
-                                                    ? 'bg-green-500/20 text-green-400 cursor-default'
-                                                    : 'bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] hover:bg-[var(--accent-hover)]'
+                                        ? 'bg-white/10 text-white cursor-default'
+                                        : searchResult.hasPendingRequest
+                                            ? 'bg-indigo-500/20 text-indigo-300 cursor-default'
+                                            : searchResult.requestSent
+                                                ? 'bg-green-500/20 text-green-400 cursor-default'
+                                                : 'bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] hover:bg-[var(--accent-hover)]'
                                         }`}
                                 >
                                     {searchResult.isFriend ? 'Already Friends' :
