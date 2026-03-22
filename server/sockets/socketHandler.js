@@ -11,9 +11,8 @@ const socketHandler = (io) => {
         // Join a room based on user ID
         socket.on('join_room', async (userId) => {
             socket.join(userId);
-            socket.userId = userId; // Store userId on socket for disconnect handling
+            socket.userId = userId;
 
-            // Add to online users
             onlineUsers.add(userId);
 
             // Update lastSeen
@@ -23,10 +22,7 @@ const socketHandler = (io) => {
                 console.error('Error updating lastSeen:', err.message);
             }
 
-            // Broadcast to all users that this user is online
             io.emit('user_status_change', { userId, status: 'online' });
-
-            // Send current online users to this user
             socket.emit('online_users_list', Array.from(onlineUsers));
 
             console.log(`User ${userId} joined room ${userId} and is online`);
@@ -37,30 +33,12 @@ const socketHandler = (io) => {
             const { senderId, receiverId, content } = data;
 
             try {
-                // Save to Database
-                const newMessage = await prisma.message.create({
-                    data: {
-                        senderId,
-                        receiverId,
-                        content,
-                        read: false,
-                    },
-                    include: {
-                        sender: {
-                            select: {
-                                id: true,
-                                name: true,
-                                avatar: true
-                            }
-                        },
-                        receiver: {
-                            select: {
-                                id: true,
-                                name: true,
-                                avatar: true
-                            }
-                        }
-                    }
+                // Save to MongoDB
+                const newMessage = await Message.create({
+                    sender: senderId,
+                    receiver: receiverId,
+                    content,
+                    read: false,
                 });
 
                 // Update the conversation's last message
@@ -68,18 +46,15 @@ const socketHandler = (io) => {
                     await Conversation.updateLastMessage(senderId, receiverId, newMessage._id);
                 } catch (convErr) {
                     console.error('Error updating conversation:', convErr.message);
-                    // Non-critical: don't fail the message send
                 }
 
                 // Emit to receiver
                 io.to(receiverId).emit('receive_message', newMessage);
-
-                // Emit to the sender's room too so all their devices update
+                // Emit to sender's room too
                 io.to(senderId).emit('receive_message', newMessage);
 
             } catch (error) {
                 console.error('Error saving message:', error);
-                socket.emit('message_error', { error: 'Failed to send message' });
             }
         });
 
@@ -99,7 +74,6 @@ const socketHandler = (io) => {
                 onlineUsers.delete(socket.userId);
                 io.emit('user_status_change', { userId: socket.userId, status: 'offline' });
 
-                // Update lastSeen on disconnect
                 try {
                     await User.findByIdAndUpdate(socket.userId, { lastSeen: new Date() });
                 } catch (err) {

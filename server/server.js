@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const { connectDB } = require('./config/db');
+const connectDB = require('./config/db');
 const socketHandler = require('./sockets/socketHandler');
 
 const authRoutes = require('./routes/authRoutes');
@@ -12,7 +12,7 @@ const friendRoutes = require('./routes/friendRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
-// Connect to PostgreSQL
+// Connect to MongoDB
 connectDB();
 
 const app = express();
@@ -20,7 +20,7 @@ const server = http.createServer(app);
 
 // Middleware
 app.use(cors({
-    origin: '*', // Allow all for now, in production set to client URL
+    origin: '*',
     credentials: true
 }));
 app.use(express.json());
@@ -35,7 +35,7 @@ app.use('/api/ai', aiRoutes);
 // Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: '*', // Allow all for now
+        origin: '*',
         methods: ['GET', 'POST'],
     },
 });

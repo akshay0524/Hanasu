@@ -17,7 +17,7 @@ export const SocketProvider = ({ children }) => {
 
             newSocket.on('connect', () => {
                 console.log('Socket connected');
-                newSocket.emit('join_room', user.id);
+                newSocket.emit('join_room', user._id);
             });
 
             // Listeners for online status

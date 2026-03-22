@@ -1,7 +1,7 @@
 const OpenAI = require('openai');
-const { prisma } = require('../config/db');
+const AIChat = require('../models/AIChat');
 
-// Initialize OpenAI only if key exists (prevents crash on start if missing)
+// Initialize OpenAI only if key exists
 let openai;
 if (process.env.OPENAI_API_KEY) {
     openai = new OpenAI({
@@ -23,29 +23,17 @@ const chatWithAI = async (req, res) => {
 
     try {
         // 1. Get or create chat history
-        let aiChat = await prisma.aIChat.findUnique({
-            where: { userId: req.user.id },
-            include: {
-                messages: {
-                    orderBy: { timestamp: 'asc' },
-                    take: -10 // Last 10 messages
-                }
-            }
-        });
+        let aiChat = await AIChat.findOne({ user: req.user._id });
 
         if (!aiChat) {
-            aiChat = await prisma.aIChat.create({
-                data: {
-                    userId: req.user.id,
-                },
-                include: {
-                    messages: true
-                }
+            aiChat = await AIChat.create({
+                user: req.user._id,
+                messages: [],
             });
         }
 
-        // 2. Prepare context for AI
-        const historyContext = aiChat.messages.map(msg => ({
+        // 2. Prepare context for AI (last 10 messages)
+        const historyContext = aiChat.messages.slice(-10).map(msg => ({
             role: msg.role,
             content: msg.content
         }));
@@ -63,7 +51,7 @@ const chatWithAI = async (req, res) => {
             try {
                 const completion = await openai.chat.completions.create({
                     messages: messagesPayload,
-                    model: 'gpt-3.5-turbo', // or gpt-4
+                    model: 'gpt-3.5-turbo',
                 });
                 aiResponseContent = completion.choices[0].message.content;
             } catch (apiError) {
@@ -72,29 +60,16 @@ const chatWithAI = async (req, res) => {
             }
         }
 
-        // 4. Save to DB using transaction
-        const [userMessage, assistantMessage] = await prisma.$transaction([
-            prisma.aIMessage.create({
-                data: {
-                    chatId: aiChat.id,
-                    role: 'user',
-                    content: message
-                }
-            }),
-            prisma.aIMessage.create({
-                data: {
-                    chatId: aiChat.id,
-                    role: 'assistant',
-                    content: aiResponseContent
-                }
-            })
-        ]);
+        // 4. Save to DB
+        aiChat.messages.push({ role: 'user', content: message });
+        aiChat.messages.push({ role: 'assistant', content: aiResponseContent });
 
-        // Return the assistant's response
+        await aiChat.save();
+
         res.json({
             role: 'assistant',
             content: aiResponseContent,
-            timestamp: assistantMessage.timestamp
+            timestamp: new Date()
         });
 
     } catch (error) {
@@ -108,19 +83,10 @@ const chatWithAI = async (req, res) => {
 // @access  Private
 const getAIHistory = async (req, res) => {
     try {
-        const aiChat = await prisma.aIChat.findUnique({
-            where: { userId: req.user.id },
-            include: {
-                messages: {
-                    orderBy: { timestamp: 'asc' }
-                }
-            }
-        });
-
+        const aiChat = await AIChat.findOne({ user: req.user._id });
         if (!aiChat) {
             return res.json([]);
         }
-
         res.json(aiChat.messages);
     } catch (error) {
         res.status(500).json({ message: error.message });
