@@ -37,10 +37,10 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
 
         const handleMessage = (msg) => {
             // 1. Reorder Logic: Move conversation to top
-            const partnerId = msg.sender === user._id ? msg.receiver : msg.sender;
+            const partnerId = msg.sender === user.id ? msg.receiver : msg.sender;
 
             setFriends(prev => {
-                const index = prev.findIndex(f => f._id === partnerId);
+                const index = prev.findIndex(f => f.id === partnerId);
                 if (index > -1) {
                     const newFriends = [...prev];
                     const [friend] = newFriends.splice(index, 1);
@@ -51,7 +51,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             });
 
             // 2. Notification Logic (Only if I am receiver and chat is not open)
-            if (msg.sender !== user._id && activeChat?._id !== msg.sender) { // If I sent it, don't notify myself
+            if (msg.sender !== user.id && activeChat?.id !== msg.sender) { // If I sent it, don't notify myself
 
                 // Update unread count
                 setUnread(prev => ({
@@ -74,7 +74,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                     // However, we need 'friends' list here to get the name.
                     // To be safe, we can just use "New Message" or fetch fresh 'friends' via a ref if simple closure capture fails. 
                     // Since 'friends' is in dependency array [socket, activeChat, friends], this closure IS fresh.
-                    const friend = friends.find(f => f._id === msg.sender);
+                    const friend = friends.find(f => f.id === msg.sender);
                     const name = friend ? friend.name : "New Message";
 
                     const notification = new Notification(name, {
@@ -101,14 +101,14 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             window.removeEventListener('click', enableAudio);
             window.removeEventListener('keydown', enableAudio);
         };
-    }, [socket, activeChat, friends, user._id]); // Add user._id just in case
+    }, [socket, activeChat, friends, user.id]); // Add user._id just in case
 
     // Clear unread when chat opens
     useEffect(() => {
         if (activeChat && activeChat.type === 'friend') {
             setUnread(prev => {
                 const newUnread = { ...prev };
-                delete newUnread[activeChat._id];
+                delete newUnread[activeChat.id];
                 return newUnread;
             });
         }
@@ -158,7 +158,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <img src={user.avatar} alt="Avatar" className="w-12 h-12 rounded-full border border-white/10 p-0.5 object-cover" />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-bamboo rounded-full border border-[var(--bg-primary)]"></div>
+                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--bg-panel)] ${socket ? 'bg-green-400' : 'bg-red-500'}`}></div>
                     </div>
                     <div>
                         <h3 className="font-medium text-[var(--text-primary)] tracking-wide">{user.name}</h3>
@@ -231,26 +231,29 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                         {friends.length === 0 && <p className="text-center text-[var(--text-secondary)] text-xs italic mt-8">Silence is golden,<br />but friends are better.</p>}
                         {friends.map(friend => (
                             <div
-                                key={friend._id}
+                                key={friend.id}
                                 onClick={() => onSelectChat({ type: 'friend', ...friend })}
                                 className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?._id === friend._id
                                     ? 'bg-white/10 border-white/10'
                                     : 'hover:bg-white/5 border-transparent'
                                     }`}
                             >
-                                <img src={friend.avatar} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-transparent group-hover:border-[var(--accent-primary)]/50" />
+                                <div className="relative flex-shrink-0">
+                                    <img src={friend.avatar} alt="Avatar" className="w-10 h-10 rounded-full" />
+                                    <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-primary)] ${onlineUsers.has(friend.id) ? 'bg-green-400' : 'bg-red-500'}`}></div>
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="text-sm text-[var(--text-primary)] font-medium truncate">{friend.name}</h4>
                                     <div className="flex items-center gap-2">
                                         <p className="text-[10px] text-[var(--text-secondary)] truncate">{friend.userTag}</p>
-                                        <span className={`text-[10px] font-medium ${onlineUsers.has(friend._id) ? 'text-green-400' : 'text-gray-500'}`}>
-                                            {onlineUsers.has(friend._id) ? 'Online' : 'Offline'}
+                                        <span className={`text-[10px] font-medium ${onlineUsers.has(friend.id) ? 'text-green-400' : 'text-gray-500'}`}>
+                                            {onlineUsers.has(friend.id) ? 'Online' : 'Offline'}
                                         </span>
                                     </div>
                                 </div>
-                                {unread[friend._id] > 0 && (
+                                {unread[friend.id] > 0 && (
                                     <div className="w-5 h-5 bg-[var(--accent-primary)] rounded-full flex items-center justify-center text-[10px] text-white font-bold shadow-lg shadow-[var(--accent-glow)] animate-bounce cursor-default">
-                                        {unread[friend._id]}
+                                        {unread[friend.id]}
                                     </div>
                                 )}
                             </div>
@@ -261,7 +264,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                 {tab === 'requests' && (
                     <div className="space-y-3">
                         {requests.map(req => (
-                            <div key={req._id} className="p-4 bg-[var(--bg-panel)] rounded-xl border border-white/5 backdrop-blur-sm">
+                            <div key={req.id} className="p-4 bg-[var(--bg-panel)] rounded-xl border border-white/5 backdrop-blur-sm">
                                 <div className="flex items-center gap-3 mb-3">
                                     <img src={req.sender.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
                                     <div>
@@ -269,8 +272,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => acceptFriendRequest(req._id).then(() => { fetchRequests(); fetchFriends(); })} className="flex-1 bg-bamboo/20 text-bamboo hover:bg-bamboo/30 py-1.5 rounded text-xs transition">Accept</button>
-                                    <button onClick={() => rejectFriendRequest(req._id).then(fetchRequests)} className="flex-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 py-1.5 rounded text-xs transition">Dismiss</button>
+                                    <button onClick={() => acceptFriendRequest(req.id).then(() => { fetchRequests(); fetchFriends(); })} className="flex-1 bg-bamboo/20 text-bamboo hover:bg-bamboo/30 py-1.5 rounded text-xs transition">Accept</button>
+                                    <button onClick={() => rejectFriendRequest(req.id).then(fetchRequests)} className="flex-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 py-1.5 rounded text-xs transition">Dismiss</button>
                                 </div>
                             </div>
                         ))}
@@ -298,7 +301,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                 <h4 className="text-[var(--text-primary)] font-medium">{searchResult.name}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] font-mono mb-4">{searchResult.userTag}</p>
                                 <button
-                                    onClick={() => handleSendRequest(searchResult._id)}
+                                    onClick={() => handleSendRequest(searchResult.id)}
                                     disabled={searchResult.requestSent || searchResult.isFriend || searchResult.hasPendingRequest}
                                     className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-all ${searchResult.isFriend
                                         ? 'bg-white/10 text-white cursor-default'

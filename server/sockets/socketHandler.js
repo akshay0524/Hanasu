@@ -38,11 +38,29 @@ const socketHandler = (io) => {
 
             try {
                 // Save to Database
-                const newMessage = await Message.create({
-                    sender: senderId,
-                    receiver: receiverId,
-                    content,
-                    read: false,
+                const newMessage = await prisma.message.create({
+                    data: {
+                        senderId,
+                        receiverId,
+                        content,
+                        read: false,
+                    },
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true
+                            }
+                        },
+                        receiver: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true
+                            }
+                        }
+                    }
                 });
 
                 // Update the conversation's last message
@@ -61,6 +79,7 @@ const socketHandler = (io) => {
 
             } catch (error) {
                 console.error('Error saving message:', error);
+                socket.emit('message_error', { error: 'Failed to send message' });
             }
         });
 

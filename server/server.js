@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const connectDB = require('./config/db');
+const { connectDB } = require('./config/db');
 const socketHandler = require('./sockets/socketHandler');
 
 const authRoutes = require('./routes/authRoutes');
@@ -12,7 +12,7 @@ const friendRoutes = require('./routes/friendRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
-// Connect to MongoDB
+// Connect to PostgreSQL
 connectDB();
 
 const app = express();

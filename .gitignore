@@ -27,3 +27,6 @@ Thumbs.db
 # IDEs
 .vscode/
 .idea/
+
+# Prisma
+server/prisma/migrations/
