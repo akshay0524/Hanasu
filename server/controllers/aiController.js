@@ -3,9 +3,11 @@ const AIChat = require('../models/AIChat');
 
 // Initialize OpenAI only if key exists
 let openai;
-if (process.env.OPENAI_API_KEY) {
+if (process.env.GEMINI_API_KEY) {
+    // Google Gemini provides a free OpenAI-compatible endpoint!
     openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: process.env.GEMINI_API_KEY,
+        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
     });
 }
 
@@ -44,14 +46,14 @@ const chatWithAI = async (req, res) => {
             { role: 'user', content: message }
         ];
 
-        let aiResponseContent = "I am an AI assistant. Please configure your OPENAI_API_KEY to get real responses.";
+        let aiResponseContent = "I am an AI assistant. Please configure your GEMINI_API_KEY to get real responses.";
 
         // 3. Call OpenAI API if configured
         if (openai) {
             try {
                 const completion = await openai.chat.completions.create({
                     messages: messagesPayload,
-                    model: 'gpt-3.5-turbo',
+                    model: 'gemini-1.5-flash',
                 });
                 aiResponseContent = completion.choices[0].message.content;
             } catch (apiError) {
