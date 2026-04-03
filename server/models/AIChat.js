@@ -48,7 +48,6 @@ const aiChatSchema = mongoose.Schema(
 
 // ─── Indexes ────────────────────────────────────────────────────────────────────
 // Fast lookup by user (unique already creates this, but explicit for clarity)
-aiChatSchema.index({ user: 1 });
 
 // ─── Statics ────────────────────────────────────────────────────────────────────
 // Get the last N messages for context window

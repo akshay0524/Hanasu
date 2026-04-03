@@ -56,12 +56,7 @@ const userSchema = mongoose.Schema(
 );
 
 // ─── Indexes ────────────────────────────────────────────────────────────────────
-// Fast lookup by email (unique already creates index, but explicit for clarity)
-userSchema.index({ email: 1 });
-// Fast lookup by Google ID during auth
-userSchema.index({ googleId: 1 });
-// Fast lookup by user tag during friend search
-userSchema.index({ userTag: 1 });
+// Unique fields (email, googleId, userTag) already have automatic indexes.
 // Support efficient friends list population
 userSchema.index({ friends: 1 });
 // TTL-friendly: index on lastSeen for potential analytics
