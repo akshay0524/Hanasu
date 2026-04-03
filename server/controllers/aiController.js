@@ -53,7 +53,7 @@ const chatWithAI = async (req, res) => {
             try {
                 const completion = await openai.chat.completions.create({
                     messages: messagesPayload,
-                    model: 'gemini-1.5-flash',
+                    model: 'gemini-2.5-flash',
                 });
                 aiResponseContent = completion.choices[0].message.content;
             } catch (apiError) {
