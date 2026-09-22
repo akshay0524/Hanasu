@@ -11,7 +11,8 @@ const protect = async (req, res, next) => {
         try {
             token = req.headers.authorization.split(' ')[1];
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const secret = process.env.JWT_SECRET || 'hanasu_jwt_secret_fallback_key_2026';
+            const decoded = jwt.verify(token, secret);
 
             req.user = await User.findById(decoded.id).select('-password');
 
@@ -19,10 +20,10 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
 
-            next();
+            return next();
         } catch (error) {
-            console.error(error);
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            console.error('Auth protect error:', error.message || error);
+            return res.status(401).json({ message: 'Not authorized, token failed' });
         }
     }
 
@@ -32,3 +33,4 @@ const protect = async (req, res, next) => {
 };
 
 module.exports = { protect };
+

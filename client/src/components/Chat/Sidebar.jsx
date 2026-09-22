@@ -16,6 +16,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
     const [searchResult, setSearchResult] = useState(null);
     const [unread, setUnread] = useState({});
     const [loading, setLoading] = useState(false);
+    const [searchError, setSearchError] = useState('');
 
     useEffect(() => {
         fetchFriends();
@@ -123,14 +124,17 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        if (!query) return;
+        const trimmed = query.trim();
+        if (!trimmed) return;
         setLoading(true);
         setSearchResult(null);
+        setSearchError('');
         try {
-            const res = await searchUser(query);
+            const res = await searchUser(trimmed);
             setSearchResult(res);
         } catch (error) {
             setSearchResult(null);
+            setSearchError(error.response?.data?.message || 'User not found');
         }
         setLoading(false);
     };
@@ -140,7 +144,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             await sendFriendRequest(id);
             setSearchResult(prev => ({ ...prev, requestSent: true }));
         } catch (error) {
-            alert("Error sending request");
+            const msg = error.response?.data?.message || "Error sending request";
+            alert(msg);
         }
     };
 
@@ -275,22 +280,35 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
 
                 {tab === 'search' && (
                     <div className="animate-fade-in">
-                        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+                        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
                             <input
                                 type="text"
                                 placeholder="Search ID (#XXXX)"
                                 className="flex-1 bg-[var(--bg-panel)] border-b border-white/10 text-[var(--text-primary)] px-2 py-2 text-sm focus:outline-none focus:border-[var(--accent-primary)] placeholder-[var(--text-secondary)] transition-all font-mono"
                                 value={query}
-                                onChange={(e) => setQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setQuery(e.target.value);
+                                    if (searchError) setSearchError('');
+                                }}
                             />
-                            <button type="submit" className="text-[var(--accent-primary)] hover:text-[var(--text-primary)] transition">
+                            <button type="submit" disabled={loading} className="text-[var(--accent-primary)] hover:text-[var(--text-primary)] transition disabled:opacity-50">
                                 <FiSearch />
                             </button>
                         </form>
 
+                        {loading && (
+                            <p className="text-xs text-[var(--text-secondary)] text-center py-4">Searching...</p>
+                        )}
+
+                        {searchError && (
+                            <div className="p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                                {searchError}
+                            </div>
+                        )}
+
                         {searchResult && (
                             <div className="flex flex-col items-center p-6 bg-white/5 rounded-xl border border-white/5">
-                                <img src={searchResult.avatar} alt="Avatar" className="w-16 h-16 rounded-full mb-3 ring-2 ring-[var(--accent-primary)]/30" />
+                                <img src={searchResult.avatar} alt="Avatar" className="w-16 h-16 rounded-full mb-3 ring-2 ring-[var(--accent-primary)]/30 object-cover" />
                                 <h4 className="text-[var(--text-primary)] font-medium">{searchResult.name}</h4>
                                 <p className="text-xs text-[var(--text-secondary)] font-mono mb-4">{searchResult.userTag}</p>
                                 <button

@@ -7,8 +7,12 @@ const FriendRequest = require('../models/FriendRequest');
 const searchUser = async (req, res) => {
     const { userTag } = req.params;
 
-    // Ensure the tag includes '#'
-    const tagCoded = userTag.startsWith('#') ? userTag : `#${userTag}`;
+    if (!userTag) {
+        return res.status(400).json({ message: 'User tag is required' });
+    }
+
+    // Ensure the tag includes '#' and is uppercase
+    const tagCoded = (userTag.startsWith('#') ? userTag : `#${userTag}`).toUpperCase();
 
     try {
         const user = await User.findOne({ userTag: tagCoded }).select('-password -googleId -email');
@@ -22,9 +26,11 @@ const searchUser = async (req, res) => {
             return res.status(400).json({ message: "You cannot search specifically for yourself here, you are already you." });
         }
 
-        // Check relationship status
+        // Check relationship status (use string comparison on ObjectIds)
         const currentUser = await User.findById(req.user._id);
-        const isFriend = currentUser.friends.includes(user._id);
+        const isFriend = currentUser.friends && currentUser.friends.some(
+            (id) => id.toString() === user._id.toString()
+        );
 
         let requestSent = false;
         let hasPendingRequest = false;
@@ -52,8 +58,10 @@ const searchUser = async (req, res) => {
             hasPendingRequest
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('searchUser error:', error);
+        res.status(500).json({ message: error.message || 'Error searching user' });
     }
 };
 
 module.exports = { searchUser };
+

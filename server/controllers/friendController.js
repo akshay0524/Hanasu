@@ -7,7 +7,11 @@ const FriendRequest = require('../models/FriendRequest');
 const sendFriendRequest = async (req, res) => {
     const { receiverId } = req.body;
 
-    if (receiverId === req.user._id.toString()) {
+    if (!receiverId) {
+        return res.status(400).json({ message: 'Receiver ID is required' });
+    }
+
+    if (receiverId.toString() === req.user._id.toString()) {
         return res.status(400).json({ message: 'Cannot send request to yourself' });
     }
 
@@ -17,12 +21,16 @@ const sendFriendRequest = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if already friends
-        if (req.user.friends.includes(receiverId)) {
+        // Check if already friends in either user's list
+        const alreadyFriends = 
+            (req.user.friends && req.user.friends.some(id => id.toString() === receiverId.toString())) ||
+            (receiver.friends && receiver.friends.some(id => id.toString() === req.user._id.toString()));
+
+        if (alreadyFriends) {
             return res.status(400).json({ message: 'Already friends' });
         }
 
-        // Check if THEY sent ME a request (Pending)
+        // Check if THEY sent ME a pending request
         const incomingRequest = await FriendRequest.findOne({
             sender: receiverId,
             receiver: req.user._id,
@@ -59,6 +67,16 @@ const sendFriendRequest = async (req, res) => {
             }
         }
 
+        // Also check if there is an accepted incoming request
+        const acceptedIncoming = await FriendRequest.findOne({
+            sender: receiverId,
+            receiver: req.user._id,
+            status: 'accepted'
+        });
+        if (acceptedIncoming) {
+            return res.status(400).json({ message: 'Already friends' });
+        }
+
         // Create new request
         const request = await FriendRequest.create({
             sender: req.user._id,
@@ -71,7 +89,8 @@ const sendFriendRequest = async (req, res) => {
 
         res.status(201).json(fullRequest);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('sendFriendRequest error:', error);
+        res.status(500).json({ message: error.message || 'Error sending friend request' });
     }
 };
 
@@ -100,23 +119,24 @@ const acceptFriendRequest = async (req, res) => {
         request.status = 'accepted';
         await request.save();
 
-        // Add to friends lists
+        // Add to friends lists (ensure no duplicates using string comparison)
         const sender = await User.findById(request.sender);
         const receiver = await User.findById(request.receiver);
 
-        if (!receiver.friends.includes(request.sender)) {
+        if (receiver && !receiver.friends.some(id => id.toString() === request.sender.toString())) {
             receiver.friends.push(request.sender);
             await receiver.save();
         }
 
-        if (!sender.friends.includes(request.receiver)) {
+        if (sender && !sender.friends.some(id => id.toString() === request.receiver.toString())) {
             sender.friends.push(request.receiver);
             await sender.save();
         }
 
         res.json({ message: 'Friend request accepted' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('acceptFriendRequest error:', error);
+        res.status(500).json({ message: error.message || 'Error accepting friend request' });
     }
 };
 
@@ -147,7 +167,8 @@ const rejectFriendRequest = async (req, res) => {
 
         res.json({ message: 'Friend request rejected' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('rejectFriendRequest error:', error);
+        res.status(500).json({ message: error.message || 'Error rejecting friend request' });
     }
 };
 
@@ -157,9 +178,10 @@ const rejectFriendRequest = async (req, res) => {
 const getFriends = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).populate('friends', 'name userTag avatar email');
-        res.json(user.friends);
+        res.json(user ? user.friends : []);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('getFriends error:', error);
+        res.status(500).json({ message: error.message || 'Error fetching friends' });
     }
 };
 
@@ -175,7 +197,8 @@ const getFriendRequests = async (req, res) => {
 
         res.json(requests);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('getFriendRequests error:', error);
+        res.status(500).json({ message: error.message || 'Error fetching friend requests' });
     }
 };
 
@@ -193,12 +216,12 @@ const removeFriend = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (!user.friends.includes(friendId)) {
+        if (!user.friends.some(id => id.toString() === friendId.toString())) {
             return res.status(400).json({ message: 'Not friends' });
         }
 
         // Remove from both users' friend lists
-        user.friends = user.friends.filter(id => id.toString() !== friendId);
+        user.friends = user.friends.filter(id => id.toString() !== friendId.toString());
         await user.save();
 
         friend.friends = friend.friends.filter(id => id.toString() !== user._id.toString());
@@ -214,7 +237,8 @@ const removeFriend = async (req, res) => {
 
         res.json({ message: 'Friend removed' });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('removeFriend error:', error);
+        res.status(500).json({ message: error.message || 'Error removing friend' });
     }
 };
 
@@ -226,3 +250,4 @@ module.exports = {
     getFriendRequests,
     removeFriend
 };
+
