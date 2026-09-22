@@ -19,9 +19,11 @@ const app = express();
 const server = http.createServer(app);
 
 // Middleware
+// Use specific origin — browsers block credentials when origin is '*'
+const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
 app.use(cors({
-    origin: '*',
-    credentials: true
+    origin: allowedOrigin,
+    credentials: true,
 }));
 app.use(express.json());
 
@@ -35,8 +37,9 @@ app.use('/api/ai', aiRoutes);
 // Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: allowedOrigin,
         methods: ['GET', 'POST'],
+        credentials: true,
     },
 });
 
