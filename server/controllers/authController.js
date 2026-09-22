@@ -25,12 +25,19 @@ const authGoogle = async (req, res) => {
     const { token } = req.body;
 
     try {
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID,
+        // Use the access token to fetch user info from Google.
+        // This works with the implicit-flow access_token returned by
+        // useGoogleLogin() on the frontend — avoids COOP popup issues.
+        client.setCredentials({ access_token: token });
+        const userInfoResponse = await client.request({
+            url: 'https://www.googleapis.com/oauth2/v3/userinfo',
         });
 
-        const { name, email, picture, sub } = ticket.getPayload();
+        const { sub, name, email, picture } = userInfoResponse.data;
+
+        if (!sub || !email) {
+            return res.status(400).json({ message: 'Google Authentication Failed: missing user info' });
+        }
 
         let user = await User.findOne({ googleId: sub });
 
@@ -54,7 +61,7 @@ const authGoogle = async (req, res) => {
             token: generateToken(user._id),
         });
     } catch (error) {
-        console.error(error);
+        console.error('authGoogle error:', error.message || error);
         res.status(400).json({ message: 'Google Authentication Failed' });
     }
 };
