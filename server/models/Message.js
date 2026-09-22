@@ -57,20 +57,17 @@ messageSchema.index({ createdAt: -1 });
 
 // ─── Pre-save middleware ────────────────────────────────────────────────────────
 // Validate sender !== receiver
-messageSchema.pre('validate', function (next) {
-    if (this.sender && this.receiver && this.sender.equals(this.receiver)) {
-        next(new Error('Sender and receiver cannot be the same user'));
-    } else {
-        next();
+messageSchema.pre('validate', function () {
+    if (this.sender && this.receiver && this.sender.toString() === this.receiver.toString()) {
+        throw new Error('Sender and receiver cannot be the same user');
     }
 });
 
 // Auto-set readAt when read is toggled to true
-messageSchema.pre('save', function (next) {
+messageSchema.pre('save', function () {
     if (this.isModified('read') && this.read && !this.readAt) {
         this.readAt = new Date();
     }
-    next();
 });
 
 // ─── Statics ────────────────────────────────────────────────────────────────────

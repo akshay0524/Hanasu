@@ -40,11 +40,9 @@ friendRequestSchema.index({ sender: 1, status: 1 });
 
 // ─── Pre-validate middleware ────────────────────────────────────────────────────
 // Validate sender !== receiver
-friendRequestSchema.pre('validate', function (next) {
+friendRequestSchema.pre('validate', function () {
     if (this.sender && this.receiver && this.sender.toString() === this.receiver.toString()) {
-        next(new Error('Cannot send a friend request to yourself'));
-    } else {
-        next();
+        throw new Error('Cannot send a friend request to yourself');
     }
 });
 
