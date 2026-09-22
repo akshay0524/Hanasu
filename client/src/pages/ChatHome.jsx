@@ -18,7 +18,7 @@ const ChatHome = () => {
             <div className={`
                 ${activeChat ? 'hidden md:flex' : 'flex'} 
                 w-full md:w-[380px] h-full flex-col z-20 
-                border-r border-white/5 bg-[var(--bg-primary)] backdrop-blur-sm
+                border-r border-[var(--border-subtle)] bg-[var(--bg-primary)] backdrop-blur-sm
             `}>
                 <Sidebar
                     activeChat={activeChat}
@@ -48,12 +48,12 @@ const ChatHome = () => {
                     ) : (
                         // Empty State (Zen Mode)
                         <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-secondary)] p-8 text-center bg-[var(--bg-primary)]">
-                            <div className="w-32 h-32 border border-[var(--text-secondary)]/10 rounded-full flex items-center justify-center mb-8 relative">
-                                <span className="text-6xl text-[var(--text-secondary)]/20 font-japanese">空</span>
-                                <div className="absolute inset-0 border border-[var(--text-secondary)]/5 rounded-full animate-ping opacity-20" style={{ animationDuration: '3s' }}></div>
+                            <div className="w-32 h-32 border border-[var(--border-strong)] rounded-full flex items-center justify-center mb-8 relative shadow-sm">
+                                <span className="text-6xl text-[var(--text-primary)]/30 font-japanese font-bold">空</span>
+                                <div className="absolute inset-0 border border-[var(--border-subtle)] rounded-full animate-ping opacity-30" style={{ animationDuration: '3s' }}></div>
                             </div>
-                            <h2 className="text-3xl font-japanese text-[var(--text-primary)]/80 mb-2">Hanasu</h2>
-                            <p className="max-w-md font-light text-sm tracking-wide text-[var(--text-secondary)]">
+                            <h2 className="text-3xl font-japanese font-bold text-[var(--text-primary)] mb-2">Hanasu</h2>
+                            <p className="max-w-md font-semibold text-sm tracking-wide text-[var(--text-secondary)]">
                                 Select a conversation to begin.
                             </p>
                         </div>
@@ -63,5 +63,6 @@ const ChatHome = () => {
         </div>
     );
 };
+
 
 export default ChatHome;

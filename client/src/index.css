@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,54 +6,85 @@
 
 @layer base {
   :root {
-    /* DEFAULT THEME: HANASU (Japanese Minimal) */
-    --bg-primary: #0f172a;
-    /* Slate 900 */
-    --bg-secondary: #020617;
-    /* Slate 950 */
-    --bg-panel: rgba(30, 41, 59, 0.5);
-    /* Slate 800 / 0.5 */
+    /* DEFAULT THEME: HANASU (Japanese Minimal Dark) */
+    --bg-primary: #0f172a;       /* Slate 900 */
+    --bg-secondary: #020617;     /* Slate 950 */
+    --bg-panel: rgba(30, 41, 59, 0.65); /* Slate 800 */
+    --bg-card: rgba(255, 255, 255, 0.05);
+    --bg-active: rgba(255, 255, 255, 0.12);
+    --bg-hover: rgba(255, 255, 255, 0.06);
 
-    --text-primary: #f8fafc;
-    /* Slate 50 */
-    --text-secondary: #94a3b8;
-    /* Slate 400 */
-    --text-accent: #f472b6;
-    /* Sakura Pink */
+    --text-primary: #f8fafc;     /* Slate 50 */
+    --text-secondary: #cbd5e1;   /* Slate 300 - clear & legible */
+    --text-muted: #94a3b8;       /* Slate 400 */
+    --text-accent: #f472b6;      /* Sakura Pink */
 
-    --accent-primary: #f472b6;
-    /* Sakura */
-    --accent-hover: #db2777;
-    /* darker pink */
+    --accent-primary: #f472b6;   /* Sakura */
+    --accent-hover: #db2777;     /* Darker pink */
     --accent-glow: rgba(244, 114, 182, 0.3);
+
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.18);
   }
 
-  /* DAWN THEME (High Contrast: Pure White & Black) */
+  /* DAWN THEME (Crisp High-Contrast Light Mode) */
   [data-theme='dawn'] {
-    --bg-primary: #ffffff;
-    /* Pure White */
-    --bg-secondary: #f4f4f5;
-    /* Zinc 100 */
+    --bg-primary: #ffffff;       /* Pure White */
+    --bg-secondary: #f8fafc;     /* Slate 50 */
     --bg-panel: #ffffff;
+    --bg-card: #f1f5f9;          /* Slate 100 */
+    --bg-active: #e2e8f0;        /* Slate 200 */
+    --bg-hover: #f1f5f9;
 
-    --text-primary: #000000;
-    /* Pure Black */
-    --text-secondary: #52525b;
-    /* Zinc 600 */
-    --text-accent: #000000;
+    --text-primary: #09090b;     /* Deep True Black */
+    --text-secondary: #1e293b;   /* Slate 800 - dark, sharp, highly legible */
+    --text-muted: #475569;       /* Slate 600 */
+    --text-accent: #09090b;
 
-    --accent-primary: #000000;
-    /* Black Accents */
-    --accent-hover: #27272a;
-    /* Dark Grey */
-    --accent-glow: rgba(0, 0, 0, 0.1);
+    --accent-primary: #09090b;   /* Solid Black Accent */
+    --accent-hover: #27272a;     /* Zinc 800 */
+    --accent-glow: rgba(0, 0, 0, 0.12);
+
+    --border-subtle: #e2e8f0;    /* Slate 200 - visible clean line */
+    --border-strong: #cbd5e1;    /* Slate 300 */
   }
 
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
-    transition: background-color 0.5s ease, color 0.5s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Light mode contrast enhancers */
+  [data-theme='dawn'] body {
+    font-weight: 500;
+  }
+
+  [data-theme='dawn'] .font-light {
+    font-weight: 500 !important;
+  }
+
+  [data-theme='dawn'] .font-normal {
+    font-weight: 500 !important;
+  }
+
+  [data-theme='dawn'] h1,
+  [data-theme='dawn'] h2,
+  [data-theme='dawn'] h3,
+  [data-theme='dawn'] h4,
+  [data-theme='dawn'] h5,
+  [data-theme='dawn'] h6 {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+  }
+
+  [data-theme='dawn'] ::placeholder {
+    color: #64748b !important;
+    opacity: 1;
+    font-weight: 500;
   }
 }
 
@@ -67,15 +98,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-panel);
+  background: var(--border-strong);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--text-muted);
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--text-secondary) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }

@@ -98,23 +98,25 @@ const ChatWindow = ({ chat, onBack }) => {
         }
     };
 
+    const isOnline = onlineUsers?.has(String(chat._id));
+
     return (
-        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)]/40 relative">
+        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative">
             {/* Minimal Floating Header */}
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/90 to-transparent flex items-center justify-between">
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/95 to-transparent border-b border-[var(--border-subtle)]/50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className="md:hidden p-2 rounded-full bg-white/5 text-[var(--text-primary)] hover:bg-white/10 transition backdrop-blur-md"
+                        className="md:hidden p-2 rounded-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition backdrop-blur-md shadow-sm"
                     >
                         <FiChevronLeft size={20} />
                     </button>
-                    <div className="flex items-center gap-3 bg-[var(--bg-panel)] p-2 pr-6 rounded-full border border-white/5 backdrop-blur-md">
-                        <img src={chat.avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+                    <div className="flex items-center gap-3 bg-[var(--bg-panel)] p-2 pr-6 rounded-full border border-[var(--border-subtle)] shadow-sm backdrop-blur-md">
+                        <img src={chat.avatar} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-[var(--border-subtle)]" />
                         <div>
-                            <h3 className="font-medium text-[var(--text-primary)] text-sm">{chat.name}</h3>
-                            <span className={`text-[10px] block ${onlineUsers?.has(chat._id) ? 'text-green-400' : 'text-gray-500'}`}>
-                                {onlineUsers?.has(chat._id) ? 'Online' : 'Offline'}
+                            <h3 className="font-bold text-[var(--text-primary)] text-sm">{chat.name}</h3>
+                            <span className={`text-[10px] font-bold block ${isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {isOnline ? 'Online' : 'Offline'}
                             </span>
                         </div>
                     </div>
@@ -123,15 +125,15 @@ const ChatWindow = ({ chat, onBack }) => {
                 <div className="relative">
                     <button
                         onClick={() => setShowMenu(!showMenu)}
-                        className="p-2 rounded-full bg-[var(--bg-panel)] text-[var(--text-primary)] hover:bg-white/10 transition backdrop-blur-md border border-white/5"
+                        className="p-2 rounded-full bg-[var(--bg-panel)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition backdrop-blur-md border border-[var(--border-subtle)] shadow-sm"
                     >
                         <FiMoreVertical />
                     </button>
                     {showMenu && (
-                        <div className="absolute right-0 top-12 bg-[var(--bg-secondary)] border border-white/10 rounded-xl shadow-xl w-40 overflow-hidden z-50">
+                        <div className="absolute right-0 top-12 bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-xl shadow-xl w-40 overflow-hidden z-50">
                             <button
                                 onClick={handleUnfriend}
-                                className="w-full text-left px-4 py-3 text-red-400 hover:bg-white/5 text-sm flex items-center gap-2"
+                                className="w-full text-left px-4 py-3 text-red-600 dark:text-red-400 font-semibold hover:bg-red-500/10 text-sm flex items-center gap-2"
                             >
                                 <FiTrash2 size={16} /> Unfriend
                             </button>
@@ -154,12 +156,12 @@ const ChatWindow = ({ chat, onBack }) => {
                             >
                                 <div
                                     className={`max-w-[75%] px-5 py-2.5 rounded-2xl text-sm leading-relaxed backdrop-blur-sm shadow-sm ${isMe
-                                        ? 'bg-[var(--accent-primary)] text-white rounded-tr-none'
-                                        : 'bg-[var(--bg-panel)] text-[var(--text-secondary)] rounded-tl-none border border-white/5'
+                                        ? 'bg-[var(--accent-primary)] text-white font-medium rounded-tr-none'
+                                        : 'bg-[var(--bg-card)] text-[var(--text-primary)] font-semibold rounded-tl-none border border-[var(--border-subtle)]'
                                         }`}
                                 >
                                     <p>{msg.content}</p>
-                                    <span className={`text-[9px] mt-1 block tracking-wider opacity-60 ${isMe ? 'text-white' : 'text-[var(--text-secondary)]'}`}>
+                                    <span className={`text-[10px] mt-1 block tracking-wider font-medium opacity-75 ${isMe ? 'text-white' : 'text-[var(--text-secondary)]'}`}>
                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
@@ -169,7 +171,7 @@ const ChatWindow = ({ chat, onBack }) => {
                 </AnimatePresence>
                 {isTyping && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start px-2">
-                        <div className="bg-[var(--bg-panel)] px-4 py-2 rounded-2xl rounded-tl-none border border-white/5 flex gap-1 items-center">
+                        <div className="bg-[var(--bg-card)] px-4 py-2 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex gap-1 items-center">
                             <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce"></span>
                             <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce delay-75"></span>
                             <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce delay-150"></span>
@@ -181,17 +183,17 @@ const ChatWindow = ({ chat, onBack }) => {
 
             {/* Floating Input */}
             <div className="p-4 bg-transparent">
-                <form onSubmit={handleSend} className="bg-[var(--bg-panel)] border border-white/10 rounded-full px-2 py-2 flex items-center gap-2 shadow-lg backdrop-blur-xl">
+                <form onSubmit={handleSend} className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-full px-3 py-2 flex items-center gap-2 shadow-lg backdrop-blur-xl">
                     <input
                         type="text"
-                        className="flex-1 bg-transparent text-[var(--text-primary)] px-4 py-2 focus:outline-none text-sm placeholder-gray-500"
+                        className="flex-1 bg-transparent text-[var(--text-primary)] font-semibold px-4 py-2 focus:outline-none text-sm placeholder-[var(--text-secondary)]/70"
                         placeholder="Type a message..."
                         value={input}
                         onChange={handleInput}
                     />
                     <button
                         type="submit"
-                        className="w-10 h-10 bg-[var(--accent-primary)] rounded-full text-white flex items-center justify-center hover:bg-[var(--accent-hover)] transition shadow-lg shadow-[var(--accent-glow)] group"
+                        className="w-10 h-10 bg-[var(--accent-primary)] rounded-full text-white flex items-center justify-center hover:bg-[var(--accent-hover)] transition shadow-lg shadow-[var(--accent-glow)] group font-bold"
                     >
                         <FiSend className="ml-0.5 group-hover:translate-x-0.5 transition-transform" />
                     </button>
@@ -200,5 +202,6 @@ const ChatWindow = ({ chat, onBack }) => {
         </div>
     );
 };
+
 
 export default ChatWindow;

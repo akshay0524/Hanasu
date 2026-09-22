@@ -78,11 +78,11 @@ const AIChatWindow = ({ onBack }) => {
                         >
                             <div
                                 className={`max-w-[85%] px-5 py-3 rounded-2xl text-sm leading-relaxed backdrop-blur-sm shadow-sm ${isMe
-                                    ? 'bg-indigo-600 text-white rounded-tr-none'
-                                    : 'bg-dark-700/60 text-gray-100 rounded-tl-none border border-white/5'
+                                    ? 'bg-indigo-600 text-white rounded-tr-none font-medium'
+                                    : 'bg-[var(--bg-card)] text-[var(--text-primary)] font-medium rounded-tl-none border border-[var(--border-subtle)]'
                                     }`}
                             >
-                                <p className="whitespace-pre-wrap font-light">{msg.content}</p>
+                                <p className="whitespace-pre-wrap">{msg.content}</p>
                             </div>
                         </motion.div>
                     );
@@ -90,10 +90,10 @@ const AIChatWindow = ({ onBack }) => {
 
                 {loading && (
                     <div className="flex justify-start">
-                        <div className="bg-dark-700/40 px-4 py-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1.5 items-center">
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                        <div className="bg-[var(--bg-card)] px-4 py-3 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex gap-1.5 items-center">
+                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                         </div>
                     </div>
                 )}
@@ -102,10 +102,10 @@ const AIChatWindow = ({ onBack }) => {
 
             {/* Input */}
             <div className="p-4 bg-transparent">
-                <form onSubmit={handleSend} className="bg-dark-800/80 border border-white/10 rounded-full px-2 py-2 flex items-center gap-2 shadow-lg backdrop-blur-xl">
+                <form onSubmit={handleSend} className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-full px-3 py-2 flex items-center gap-2 shadow-lg backdrop-blur-xl">
                     <input
                         type="text"
-                        className="flex-1 bg-transparent text-white px-4 py-2 focus:outline-none text-sm placeholder-gray-500"
+                        className="flex-1 bg-transparent text-[var(--text-primary)] font-semibold px-4 py-2 focus:outline-none text-sm placeholder-[var(--text-secondary)]/70"
                         placeholder="Ask anything..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -114,7 +114,7 @@ const AIChatWindow = ({ onBack }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-10 h-10 bg-indigo-500 rounded-full text-white flex items-center justify-center hover:bg-indigo-600 transition shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                        className="w-10 h-10 bg-indigo-500 rounded-full text-white flex items-center justify-center hover:bg-indigo-600 transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 font-bold"
                     >
                         <FiSend className="ml-0.5" />
                     </button>
