@@ -773,39 +773,30 @@ export default function LandingPage() {
       <div className="fixed inset-0 pointer-events-none z-[1] bg-[radial-gradient(ellipse_at_bottom,_rgba(255,177,0,0.04)_0%,_transparent_50%)]" />
 
       {/* ------------------------------------------------------------- */}
-      {/* MINIMAL NAVBAR — STRICTLY TEXT-FOCUSED, NO LOGO GRAPHIC */}
+      {/* MINIMAL FLOATING NAVIGATION — CLEAN, IMMERSIVE, NO BRAND MARK */}
       {/* ------------------------------------------------------------- */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-10 md:px-16 py-5 bg-[#090705]/70 backdrop-blur-xl border-b border-[var(--border-subtle)] transition-all">
-        {/* Brand: Plain Text Only, No SVG / No Graphic Mark */}
-        <button
-          onClick={() => scrollToProgress(0)}
-          className="text-xl sm:text-2xl font-display font-bold tracking-[0.16em] text-[#FFF7EA] hover:text-[#FFB000] transition-colors focus:outline-none"
-        >
-          HANASU
-        </button>
-
-        {/* Navigation Links */}
-        <nav className="flex items-center gap-6 sm:gap-10">
+      <header className="fixed top-5 sm:top-6 right-5 sm:right-10 z-50 flex items-center pointer-events-auto">
+        <nav className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-full bg-[#12100D]/80 backdrop-blur-xl border border-[var(--border-subtle)] shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
           <button
             onClick={() => scrollToProgress(0)}
-            className={`text-xs uppercase tracking-widest font-medium transition-colors ${
-              activeSection === 0 ? 'text-[#FFB000]' : 'text-[var(--text-muted)] hover:text-[#FFF7EA]'
+            className={`px-3.5 py-1.5 rounded-full text-xs uppercase tracking-widest font-medium transition-colors ${
+              activeSection === 0 ? 'text-[#FFB000] bg-[rgba(255,176,0,0.12)]' : 'text-[var(--text-muted)] hover:text-[#FFF7EA]'
             } hidden sm:inline-block`}
           >
             Home
           </button>
           <button
             onClick={() => scrollToProgress(0.35)}
-            className={`text-xs uppercase tracking-widest font-medium transition-colors ${
-              activeSection === 1 ? 'text-[#FFB000]' : 'text-[var(--text-muted)] hover:text-[#FFF7EA]'
+            className={`px-3.5 py-1.5 rounded-full text-xs uppercase tracking-widest font-medium transition-colors ${
+              activeSection === 1 ? 'text-[#FFB000] bg-[rgba(255,176,0,0.12)]' : 'text-[var(--text-muted)] hover:text-[#FFF7EA]'
             } hidden sm:inline-block`}
           >
             Connection
           </button>
           <button
             onClick={() => scrollToProgress(0.65)}
-            className={`text-xs uppercase tracking-widest font-medium transition-colors ${
-              activeSection === 2 ? 'text-[#FFB000]' : 'text-[var(--text-muted)] hover:text-[#FFF7EA]'
+            className={`px-3.5 py-1.5 rounded-full text-xs uppercase tracking-widest font-medium transition-colors ${
+              activeSection === 2 ? 'text-[#FFB000] bg-[rgba(255,176,0,0.12)]' : 'text-[var(--text-muted)] hover:text-[#FFF7EA]'
             } hidden sm:inline-block`}
           >
             Experience
@@ -814,7 +805,7 @@ export default function LandingPage() {
           {/* Primary CTA */}
           <button
             onClick={handleOpenChat}
-            className="px-5 py-2.5 rounded-full text-xs uppercase tracking-widest font-bold bg-[#FF6A00] text-[#090705] hover:bg-[#E05D00] shadow-[0_0_20px_rgba(255,106,0,0.35)] hover:shadow-[0_0_28px_rgba(255,106,0,0.6)] transition-all duration-300"
+            className="px-5 py-2 rounded-full text-xs uppercase tracking-widest font-bold bg-[#FF6A00] text-[#090705] hover:bg-[#E05D00] shadow-[0_0_20px_rgba(255,106,0,0.35)] hover:shadow-[0_0_28px_rgba(255,106,0,0.6)] transition-all duration-300"
           >
             Open Chat
           </button>
@@ -826,7 +817,7 @@ export default function LandingPage() {
       {/* ------------------------------------------------------------- */}
       <main className="relative z-10 w-full">
         {/* SECTION 1: HERO */}
-        <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 pt-24 pb-12 relative">
+        <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 pt-12 pb-12 relative">
           <div className="max-w-3xl mx-auto flex flex-col items-center">
             {/* Minimal Sub-Badge */}
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-[var(--border-subtle)] bg-[#12100D]/70 backdrop-blur-md mb-8 shadow-sm">
