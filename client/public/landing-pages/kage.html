@@ -4387,7 +4387,16 @@ function wireNav() {
      one link per section in matching order. With five links over four chapters
      every entry past the third lit for its neighbour: standing in Afterlight
      highlighted Stories. Reading the destination cannot drift. */
-  const linkSec = links.map(l => SECS.indexOf(document.querySelector(l.getAttribute('href'))));
+  const linkSec = links.map(l => {
+    const href = l.getAttribute('href');
+    if (!href || !href.startsWith('#') || href.includes('/')) return -1;
+    try {
+      const el = document.querySelector(href);
+      return el ? SECS.indexOf(el) : -1;
+    } catch(err) {
+      return -1;
+    }
+  });
   window.addEventListener('scroll', () => {
     const y = scrollY;
     nav.classList.toggle('stuck', y > 40);
@@ -4404,10 +4413,14 @@ function wireNav() {
     }
   }, { passive: true });
   $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
-    const t = document.querySelector(a.getAttribute('href'));
-    if (!t) return;
-    e.preventDefault();
-    scrollTo({ top: a.getAttribute('href') === '#top' ? 0 : t.offsetTop - 40, behavior: REDUCE ? 'auto' : 'smooth' });
+    const href = a.getAttribute('href');
+    if (!href || href.includes('/')) return;
+    try {
+      const t = document.querySelector(href);
+      if (!t) return;
+      e.preventDefault();
+      scrollTo({ top: href === '#top' ? 0 : t.offsetTop - 40, behavior: REDUCE ? 'auto' : 'smooth' });
+    } catch(err) {}
   }));
 }
 
@@ -4783,7 +4796,7 @@ function boot() {
     try { r = j[1](); }
     catch (err) {
       console.error('[kage] job "' + j[0] + '" failed', err);
-      if (i <= 1) return fallback(err);          /* no renderer, no scene */
+      if (i === 1) return fallback(err);
     }
     (r && r.then) ? r.then(done, done) : done();
   };
@@ -4796,35 +4809,7 @@ function fallback(err) {
   document.body.classList.remove('is-locked');
   preEl.classList.add('done');
   $$('[data-rv], .mask-line').forEach(e => e.classList.add('rv-in'));
-  
-/* Hanasu App Router Connection */
-function triggerHanasuRoute(e) {
-  if (e) e.preventDefault();
-  var u = null;
-  try { u = localStorage.getItem('user'); } catch(err) {}
-  var targetRoute = u ? '/chat' : '/login';
-  if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type: 'HANASU_NAVIGATE', route: targetRoute }, '*');
-  } else {
-    window.location.hash = '#' + targetRoute;
-  }
-}
-
-document.querySelectorAll('.hanasu-enter-trigger').forEach(function(el) {
-  el.addEventListener('click', triggerHanasuRoute);
-});
-
-// Update CTA button label if user is already logged in
-try {
-  if (localStorage.getItem('user')) {
-    var ctaText = document.querySelector('#enter-hanasu-cta span');
-    if (ctaText) ctaText.textContent = 'Open Chat';
-    var navCta = document.querySelector('#nav-enter-cta span');
-    if (navCta) navCta.textContent = 'Open Chat';
-  }
-} catch(e) {}
-
-window.__kage = window.__secret = { fallback: true, error: String(err && err.message || err) };
+  window.__kage = window.__secret = { fallback: true, error: String(err && err.message || err) };
 }
 
 function start() {
