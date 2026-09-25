@@ -634,7 +634,7 @@ body[data-layout-closing="b"] .fin{
 body[data-layout-closing="b"] .fin .eyebrow{ grid-column:1; grid-row:1; margin:0; }
 body[data-layout-closing="b"] .fin h2{
   grid-column:2; grid-row:1 / 4; align-self:center; justify-self:end;
-  font-size:clamp(52px,6vw,82px); writing-mode:vertical-rl;
+  font-size:clamp(40px,5vw,72px); writing-mode:horizontal-tb;
 }
 body[data-layout-closing="b"] .fin p{ grid-column:1; grid-row:2; margin:0; }
 body[data-layout-closing="b"] .fin .cta{ grid-column:1; grid-row:3; justify-self:start; margin-top:4px; }
@@ -656,7 +656,7 @@ body[data-layout-footer="b"] .foot-grid > div:nth-child(n+3){
 body[data-layout-footer="b"] .foot-base{ display:grid; grid-template-columns:1fr auto 1fr; }
 body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
 
-/* ================================================= foreground layers (KAGE)
+/* ================================================= foreground layers (HANASU)
    The transparent PNG library in secret-pathways-assets/foreground/png is
    introduced as a near plane. Each section carries one .fg box holding a few
    cut-outs that stand between the live sanctuary and the reading: the scene
@@ -901,6 +901,149 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
   [data-rv]{ opacity:1 !important; transform:none !important; }
   .mask-line > span,.word{ opacity:1 !important; transform:none !important; }
 }
+
+/* --- HANASU HERO CENTER STAGE --- */
+.hero-stage {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+  width: min(92vw, 680px);
+  pointer-events: auto;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(18, 16, 13, 0.72);
+  border: 1px solid rgba(255, 177, 0, 0.25);
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #D4C7B5;
+  backdrop-filter: blur(12px);
+  margin-bottom: 22px;
+}
+
+.hero-badge .badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF6A00;
+  box-shadow: 0 0 10px #FF6A00;
+}
+
+.hero-badge .jp {
+  color: #FFB000;
+  font-weight: 600;
+}
+
+.hero-badge .badge-sep {
+  opacity: 0.4;
+}
+
+.hero-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(48px, 9.5vw, 100px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin: 0;
+  line-height: 1;
+  background: linear-gradient(180deg, #FFF7EA 0%, #F5EBDD 55%, #C2B3A1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 30px rgba(0, 0, 0, 0.85));
+}
+
+.hero-subtitle {
+  font-size: clamp(18px, 2.8vw, 26px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #FFF7EA;
+  margin: 16px 0 6px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.95);
+}
+
+.hero-tagline {
+  font-size: clamp(13px, 1.8vw, 15px);
+  font-weight: 300;
+  color: #B8AA98;
+  letter-spacing: 0.06em;
+  margin: 0 0 30px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-enter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 36px;
+  background: rgba(255, 106, 0, 0.15);
+  border: 1px solid #FF6A00;
+  border-radius: 999px;
+  color: #FFF7EA;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px rgba(255, 106, 0, 0.28), inset 0 0 12px rgba(255, 106, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.hero-enter-btn:hover {
+  background: #FF6A00;
+  color: #090705;
+  box-shadow: 0 0 36px rgba(255, 106, 0, 0.65), inset 0 0 16px rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.hero-enter-btn svg {
+  transition: transform 0.25s ease;
+}
+
+.hero-enter-btn:hover svg {
+  transform: translateX(4px);
+}
+
+@media (max-width: 640px) {
+  .hero-stage {
+    top: 44%;
+    width: 90vw;
+  }
+  .hero-badge {
+    padding: 5px 12px;
+    font-size: 10px;
+    margin-bottom: 14px;
+  }
+  .hero-subtitle {
+    margin: 12px 0 4px;
+  }
+  .hero-tagline {
+    margin-bottom: 22px;
+  }
+  .hero-enter-btn {
+    padding: 12px 28px;
+    font-size: 12px;
+  }
+}
+
 </style>
 </head>
 <body data-layout-hero="b" data-layout-story="b" data-layout-gallery="b"
@@ -952,17 +1095,25 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
 
 <!-- ============================================================ hero -->
 <section class="hero" id="hero" data-cam="0">
-  <div class="hero-top">
-    <div class="eyebrow" data-rv="fade"><span class="dot" style="background:#FF6A00;box-shadow:0 0 10px #FF6A00"></span> Scene 01 — Intro</div>
-    <h1 class="display h-hero">
-      <span class="mask-line"><span>Talk freely.</span></span>
-      <span class="mask-line"><span>Stay</span></span>
-      <span class="mask-line"><span>connected.</span></span>
-    </h1>
-    <p class="hero-sub body" data-rv="up">Conversations, with feeling. A real-time communication space where words flow with warmth, presence, and cinematic clarity.</p>
+    <div class="hero-stage" data-rv="fade">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span class="jp">話す</span>
+      <span class="badge-sep">·</span>
+      <span>REAL-TIME PRESENCE</span>
+    </div>
+    <h1 class="hero-title">HANASU</h1>
+    <p class="hero-subtitle">Talk freely. Stay connected.</p>
+    <p class="hero-tagline">Conversations, with feeling.</p>
+    <div class="hero-actions">
+      <a class="hero-enter-btn hanasu-enter-trigger" href="#/chat" id="hero-enter-main-cta" data-cursor>
+        <span>ENTER HANASU</span>
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
   </div>
-
-  <div class="hero-spacer"></div>
 
   <div class="hero-foot">
     <div class="hero-cue" data-rv="fade"><span>Scroll to enter</span><span class="track"><i></i></span></div>
@@ -1013,7 +1164,7 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
   <div class="gate-grid">
     <h2 class="display h-sec" data-rv="up">Charred cypress, worn stone, one gate left open.</h2>
     <div class="gate-copy">
-      <p class="lead" data-rv="up">Kage begins where the city stops: a mountain gate of cedar burned black,
+      <p class="lead" data-rv="up">Hanasu begins where the noise stops: a mountain gate of cedar burned black,
         standing in its own weather. The soot is not decoration. It is how a board is taught to survive a
         hundred rainy seasons, and the first thing this place asks you to understand.</p>
       <p class="body" data-rv="up">Climb the worn steps and the worship hall lifts out of the mist, its paper
@@ -1183,8 +1334,7 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
         <circle cx="22" cy="25" r="8.6" fill="#e0231c" fill-opacity=".9"/>
         <path d="M5 13h34M9 18.4h26M22 8.5v27" stroke="#dfe7e0" stroke-width="1.5"/>
       </svg>
-      <p>A five-chapter night walk through a Kyoto mountain temple. Three illustrated garden field notes
-        sit inside a live Three.js sanctuary.</p>
+      <p>Hanasu — A cinematic real-time chat sanctuary. Speak freely, stay connected, and experience conversations with feeling.</p>
     </div>
     <div><h4>Chapters</h4><ul>
       <li><a href="#gate" data-cursor>The Sanmon</a></li>
@@ -1205,9 +1355,9 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
     </ul></div>
   </div>
   <div class="foot-base">
-    <span>© 2026 Kage — Kage no Michi</span>
+    <span>© 2026 Hanasu — Conversations, with feeling.</span>
     <span class="jp">静けさは一つの技である</span>
-    <span>WebGL · Onest · Kyoto</span>
+    <span>WebGL · Real-Time · Hanasu</span>
   </div>
 </footer>
 
@@ -1223,7 +1373,7 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
 <script src="secret-pathways-assets/three.min.js"></script>
 <script>
 /* =====================================================================
-   KAGE — a live Kyoto mountain temple, after dark.
+   HANASU — Real-Time Conversations, with feeling.
    Everything on this page is generated at runtime: no photographs,
    no video, no external assets beyond three.js and two subset fonts.
    ===================================================================== */
@@ -2286,7 +2436,7 @@ const HI = qs('q', COARSE ? 'low' : 'high');
 const LOW = HI === 'low';
 const WANT_POST    = qs('post', '1') !== '0';
 const WANT_SHADOW  = qs('shadow', LOW ? '0' : '1') !== '0';
-const DPR_CAP      = qn('dpr', LOW ? 1.4 : 1.8);
+const DPR_CAP      = qn('dpr', (LOW || COARSE) ? 1.25 : 1.5);
 /* the renderer trades resolution for frame rate on its own — the scene is
    fill-bound (five big alpha-blended veils plus a bloom chain), so pixels
    are the only knob worth turning on unknown hardware */
@@ -3036,56 +3186,12 @@ function buildForeground() {
 /* --------------------------------------------------- the giant wordmark */
 const WORD_Z = 3.0;
 function buildWordmark() {
-  /* The word is set to the frame width, so a short word is a *taller* word.
-     Four letters at the old tracking put a 400-pixel cap height across the
-     scene; the letters are spaced out instead, which keeps the type edge to
-     edge while the caps come back down to the height of the headline block. */
-  const SZ = 320, TRACK = .40, PAD = 26;
-  const m = cvs(4, 4).getContext('2d');
-  m.font = '600 ' + SZ + 'px Wordmark, sans-serif';
-  m.textBaseline = 'alphabetic'; m.textAlign = 'left';
-  const word = 'KAGE', gl = [];
-  let pen = 0, ascMax = 0, descMax = 0, xMin = 1e9, xMax = -1e9;
-  for (const ch of word) {
-    const t = m.measureText(ch);
-    const g = { ch: ch, adv: t.width, asc: t.actualBoundingBoxAscent, desc: t.actualBoundingBoxDescent,
-                l: t.actualBoundingBoxLeft, r: t.actualBoundingBoxRight, pen: pen };
-    gl.push(g);
-    ascMax = Math.max(ascMax, g.asc); descMax = Math.max(descMax, g.desc);
-    xMin = Math.min(xMin, pen - g.l); xMax = Math.max(xMax, pen + g.r);
-    pen += t.width + TRACK * SZ;
-  }
   const group = new THREE.Group();
-  WORD.glyphs = [];
-  gl.forEach((g, i) => {
-    const cw = Math.ceil(g.l + g.r) + PAD * 2, chh = Math.ceil(g.asc + g.desc) + PAD * 2;
-    const c = cvs(cw, chh), x = c.getContext('2d');
-    x.font = '600 ' + SZ + 'px Wordmark, sans-serif';
-    x.textBaseline = 'alphabetic'; x.textAlign = 'left';
-    /* the vertical wash is baked per glyph so the whole word shares one ramp */
-    const gy0 = PAD + g.asc - ascMax, gy1 = PAD + g.asc + descMax * .4;
-    const grad = x.createLinearGradient(0, gy0, 0, gy1);
-    grad.addColorStop(0, 'rgb(226,236,229)');
-    grad.addColorStop(.52, 'rgb(198,214,203)');
-    grad.addColorStop(1, 'rgb(150,170,157)');
-    x.fillStyle = grad;
-    x.fillText(g.ch, PAD + g.l, PAD + g.asc);
-
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(cw, chh),
-      new THREE.MeshBasicMaterial({ map: tx(c, { aniso: 16 }), transparent: true,
-        depthWrite: false, side: THREE.DoubleSide, fog: true, opacity: 1 }));
-    mesh.position.set(g.pen + (g.r - g.l) / 2, (g.asc - g.desc) / 2 + (PAD - PAD) , 0);
-    mesh.position.y = (g.asc - g.desc) / 2;
-    mesh.renderOrder = 12;
-    mesh.frustumCulled = false;
-    mesh.userData.baseY = mesh.position.y;
-    group.add(mesh);
-    WORD.glyphs.push(mesh);
-  });
   group.position.z = WORD_Z;
   scene.add(group);
+  WORD.glyphs = [];
   WORD.group = group;
-  WORD.ink = { xMin: xMin, xMax: xMax, cx: (xMin + xMax) / 2, w: xMax - xMin, asc: ascMax };
+  WORD.ink = { xMin: 0, xMax: 100, cx: 50, w: 100, asc: 50 };
 }
 const WORD = { glyphs: [], group: null, ink: null, reveal: 0 };
 
@@ -3956,9 +4062,9 @@ function initPost() {
   if (!WANT_POST) return;
   const w = renderer.domElement.width, h = renderer.domElement.height;
   const O = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, type: THREE.HalfFloatType, depthBuffer: false, stencilBuffer: false };
-  POST.scene = new THREE.WebGLRenderTarget(w, h, Object.assign({}, O, { depthBuffer: true, samples: LOW ? 0 : 2 }));
+  POST.scene = new THREE.WebGLRenderTarget(w, h, Object.assign({}, O, { depthBuffer: true, samples: 0 }));
   let lw = Math.max(2, w >> 1), lh = Math.max(2, h >> 1);
-  const N = 4;
+  const N = (LOW || COARSE) ? 2 : 3;
   for (let i = 0; i < N; i++) {
     POST.levels.push({ a: new THREE.WebGLRenderTarget(lw, lh, O), b: new THREE.WebGLRenderTarget(lw, lh, O), w: lw, h: lh });
     lw = Math.max(2, lw >> 1); lh = Math.max(2, lh >> 1);
@@ -4339,7 +4445,16 @@ function wireHeroExit() {
       o.el.style.pointerEvents = a < .05 ? 'none' : '';
     });
   };
-  addEventListener('scroll', apply, { passive: true });
+  let _scrollScheduled = false;
+  addEventListener('scroll', () => {
+    if (!_scrollScheduled) {
+      _scrollScheduled = true;
+      requestAnimationFrame(() => {
+        apply();
+        _scrollScheduled = false;
+      });
+    }
+  }, { passive: true });
   addEventListener('resize', apply, { passive: true });
   apply();
 }
@@ -4449,11 +4564,10 @@ function wireCursor() {
     el.addEventListener('mouseenter', () => dot.classList.add('act'));
     el.addEventListener('mouseleave', () => dot.classList.remove('act'));
   });
-  (function tick() {
+  window.__updateCursor = function() {
     x = lerp(x, tx2, .18); y = lerp(y, ty, .18);
     dot.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
-    requestAnimationFrame(tick);
-  })();
+  };
 }
 
 function makeGrain() {
@@ -4560,6 +4674,8 @@ function cardAlpha(el) {
 }
 function renderCards(rt) {
   if (!CARDS.length) return;
+  /* Throttle cards rendering outside of Chapter 2 */
+  if (RIG.prog < 1.1 || RIG.prog > 2.9) return;
   let drew = false;
   for (let i = 0; i < CARDS.length; i++) {
     const C = CARDS[i], r = C.el.getBoundingClientRect();
@@ -4722,6 +4838,7 @@ function frame(now) {
     WORD.reveal = Math.min(1.2, el / 1.5);
   }
 
+  if (window.__updateCursor) window.__updateCursor();
   applyCamera();
   updateWorld(dt);
   render();

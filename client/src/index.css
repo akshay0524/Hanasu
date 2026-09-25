@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,47 +6,61 @@
 
 @layer base {
   :root {
-    /* DEFAULT THEME: HANASU (Japanese Minimal Dark) */
-    --bg-primary: #0f172a;       /* Slate 900 */
-    --bg-secondary: #020617;     /* Slate 950 */
-    --bg-panel: rgba(30, 41, 59, 0.65); /* Slate 800 */
-    --bg-card: rgba(255, 255, 255, 0.05);
-    --bg-active: rgba(255, 255, 255, 0.12);
-    --bg-hover: rgba(255, 255, 255, 0.06);
+    /* HANASU SHARED DESIGN SYSTEM TOKENS */
+    --hanasu-orange: #FF6A00;
+    --hanasu-amber: #FFB000;
+    --hanasu-yellow: #FFD166;
 
-    --text-primary: #f8fafc;     /* Slate 50 */
-    --text-secondary: #cbd5e1;   /* Slate 300 - clear & legible */
-    --text-muted: #94a3b8;       /* Slate 400 */
-    --text-accent: #f472b6;      /* Sakura Pink */
+    --hanasu-bg: #090705;
+    --hanasu-surface: #12100D;
+    --hanasu-surface-2: #191510;
 
-    --accent-primary: #f472b6;   /* Sakura */
-    --accent-hover: #db2777;     /* Darker pink */
-    --accent-glow: rgba(244, 114, 182, 0.3);
+    --hanasu-text: #FFF7EA;
+    --hanasu-text-muted: #B8AA98;
 
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.18);
+    --hanasu-border: rgba(255, 177, 0, 0.16);
+
+    /* SEMANTIC CHAT UI TOKENS (WARM HANASU SYSTEM) */
+    --bg-primary: #090705;          /* Warm Black Void */
+    --bg-secondary: #050403;        /* Deepest Charcoal */
+    --bg-panel: rgba(18, 16, 13, 0.90); /* Hanasu Surface glass */
+    --bg-card: rgba(25, 21, 16, 0.70); /* Hanasu Surface 2 */
+    --bg-active: rgba(255, 106, 0, 0.14); /* Subtle Orange active */
+    --bg-hover: rgba(255, 176, 0, 0.08);  /* Amber hover */
+
+    --text-primary: #FFF7EA;        /* Warm Cream White */
+    --text-secondary: #D4C7B5;      /* Warm Sand */
+    --text-muted: #B8AA98;          /* Muted Amber Sand */
+    --text-accent: #FF6A00;         /* Hanasu Orange */
+
+    --accent-primary: #FF6A00;      /* Hanasu Orange */
+    --accent-hover: #E05D00;        /* Deep Orange */
+    --accent-glow: rgba(255, 106, 0, 0.35);
+
+    --border-subtle: rgba(255, 177, 0, 0.14);
+    --border-strong: rgba(255, 177, 0, 0.28);
   }
 
-  /* DAWN THEME (Crisp High-Contrast Light Mode) */
+  /* DAWN THEME (Crisp High-Contrast Warm Light Mode) */
   [data-theme='dawn'] {
-    --bg-primary: #ffffff;       /* Pure White */
-    --bg-secondary: #f8fafc;     /* Slate 50 */
-    --bg-panel: #ffffff;
-    --bg-card: #f1f5f9;          /* Slate 100 */
-    --bg-active: #e2e8f0;        /* Slate 200 */
-    --bg-hover: #f1f5f9;
+    --bg-primary: #FAF6F0;       /* Warm Alabaster */
+    --bg-secondary: #F0EAE1;     /* Soft Linen */
+    --bg-panel: #FFFFFF;
+    --bg-card: #F5EFE6;
+    --bg-active: #EADECF;
+    --bg-hover: #F0EAE1;
 
-    --text-primary: #09090b;     /* Deep True Black */
-    --text-secondary: #1e293b;   /* Slate 800 - dark, sharp, highly legible */
-    --text-muted: #475569;       /* Slate 600 */
-    --text-accent: #09090b;
+    --text-primary: #191510;     /* Deep Warm Espresso */
+    --text-secondary: #4A3E31;   /* Warm Umber */
+    --text-muted: #7E6F5E;       /* Sand Muted */
+    --text-accent: #D95A00;      /* Deep Orange Accent */
 
-    --accent-primary: #09090b;   /* Solid Black Accent */
-    --accent-hover: #27272a;     /* Zinc 800 */
-    --accent-glow: rgba(0, 0, 0, 0.12);
+    --accent-primary: #D95A00;   /* Deep Orange */
+    --accent-hover: #B54700;
+    --accent-glow: rgba(217, 90, 0, 0.2);
 
-    --border-subtle: #e2e8f0;    /* Slate 200 - visible clean line */
-    --border-strong: #cbd5e1;    /* Slate 300 */
+    --border-subtle: rgba(180, 140, 90, 0.22);
+    --border-strong: rgba(180, 140, 90, 0.38);
   }
 
   body {
@@ -58,7 +72,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Light mode contrast enhancers */
+  /* Dawn mode typography contrast */
   [data-theme='dawn'] body {
     font-weight: 500;
   }
@@ -82,7 +96,7 @@
   }
 
   [data-theme='dawn'] ::placeholder {
-    color: #64748b !important;
+    color: #7E6F5E !important;
     opacity: 1;
     font-weight: 500;
   }

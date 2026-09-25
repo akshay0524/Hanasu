@@ -151,34 +151,38 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
 
     return (
         <div className="flex flex-col h-full bg-[var(--bg-primary)] backdrop-blur-md transition-colors duration-300">
-            {/* Profile Header */}
-            <div className="p-6 pb-4 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-panel)]">
-                <div className="flex items-center gap-4">
+            {/* Brand & Profile Header */}
+            <div className="p-5 pb-4 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-panel)]">
+                <div className="flex items-center gap-3">
                     <div className="relative">
-                        <img src={user.avatar} alt="Avatar" className="w-12 h-12 rounded-full border border-[var(--border-subtle)] p-0.5 object-cover" />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[var(--bg-primary)]"></div>
+                        <img src={user.avatar} alt="Avatar" className="w-11 h-11 rounded-full border border-[var(--border-subtle)] p-0.5 object-cover" />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#FF6A00] rounded-full border-2 border-[var(--bg-primary)] shadow-[0_0_8px_#FF6A00]"></div>
                     </div>
                     <div>
-                        <h3 className="font-bold text-[var(--text-primary)] tracking-wide">{user.name}</h3>
-                        <p className="text-xs text-[var(--text-accent)] font-mono font-semibold">{user.userTag}</p>
+                        <div className="flex items-center gap-1.5">
+                            <span className="font-display font-bold tracking-[0.14em] text-xs text-[#FFF7EA]">HANASU</span>
+                            <span className="text-[10px] text-[#FFB000] font-japanese font-semibold">話す</span>
+                        </div>
+                        <h3 className="font-semibold text-sm text-[var(--text-primary)] tracking-wide truncate max-w-[150px]">{user.name}</h3>
+                        <p className="text-[11px] text-[#FFB000]/80 font-mono font-medium">{user.userTag}</p>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-1">
                     <button
                         onClick={toggleTheme}
-                        className={`p-2 rounded-full transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]`}
+                        className="p-2 rounded-lg transition-all text-[var(--text-secondary)] hover:text-[#FFB000] hover:bg-[var(--bg-hover)]"
                         title="Toggle Theme"
                     >
-                        <FiZap size={18} />
+                        <FiZap size={17} />
                     </button>
-                    <button onClick={logout} className="text-[var(--text-secondary)] hover:text-red-500 transition-colors p-2" title="Log Out">
-                        <FiLogOut size={18} />
+                    <button onClick={logout} className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-red-400 hover:bg-[var(--bg-hover)] transition-colors" title="Log Out">
+                        <FiLogOut size={17} />
                     </button>
                 </div>
             </div>
 
             {/* Modern Tabs */}
-            <div className="flex p-4 pb-2 gap-4 border-b border-[var(--border-subtle)]/50">
+            <div className="flex px-4 pt-3 gap-6 border-b border-[var(--border-subtle)]">
                 {['friends', 'requests', 'search'].map((t) => (
                     <button
                         key={t}
@@ -186,20 +190,20 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                             setTab(t);
                             if (socket) socket.emit('get_online_users');
                         }}
-                        className={`relative pb-2 text-sm font-semibold tracking-wide transition-colors ${tab === t ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        className={`relative pb-2.5 text-xs font-semibold tracking-wider uppercase transition-colors ${tab === t ? 'text-[#FFF7EA]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                             }`}
                     >
                         {t === 'friends' && 'Chats'}
                         {t === 'requests' && 'Alerts'}
                         {t === 'search' && 'Add'}
                         {t === 'requests' && requests.length > 0 && (
-                            <span className="absolute -top-1 -right-2 w-2 h-2 bg-sakura rounded-full animate-pulse"></span>
+                            <span className="absolute -top-0.5 -right-2 w-2 h-2 bg-[#FF6A00] rounded-full shadow-[0_0_6px_#FF6A00] animate-pulse"></span>
                         )}
                         {t === 'friends' && Object.values(unread).reduce((a, b) => a + b, 0) > 0 && (
-                            <span className="absolute -top-1 -right-2 w-2 h-2 bg-sakura rounded-full animate-pulse"></span>
+                            <span className="absolute -top-0.5 -right-2 w-2 h-2 bg-[#FF6A00] rounded-full shadow-[0_0_6px_#FF6A00] animate-pulse"></span>
                         )}
                         {tab === t && (
-                            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[var(--text-primary)]"></span>
+                            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#FF6A00] shadow-[0_0_8px_rgba(255,106,0,0.6)]"></span>
                         )}
                     </button>
                 ))}
@@ -211,17 +215,20 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                 {/* AI Chat Card */}
                 <div
                     onClick={() => onSelectChat({ type: 'ai', id: 'ai', name: 'AI Helper' })}
-                    className={`p-4 rounded-xl flex items-center gap-4 cursor-pointer transition-all duration-300 border ${activeChat?.type === 'ai'
-                        ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 shadow-[0_0_15px_var(--accent-glow)]'
-                        : 'bg-[var(--bg-card)] border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]'
+                    className={`p-3.5 rounded-xl flex items-center gap-3.5 cursor-pointer transition-all duration-200 border ${activeChat?.type === 'ai'
+                        ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.12)]'
+                        : 'bg-[#12100D]/60 border-[var(--border-subtle)] hover:bg-[#191510]/80 hover:border-[#FFB000]/25'
                         }`}
                 >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
-                        <FiCpu size={18} />
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold shadow-[0_0_12px_rgba(255,106,0,0.3)]">
+                        <FiCpu size={17} />
                     </div>
-                    <div>
-                        <h4 className="font-bold text-[var(--text-primary)] text-sm">AI Assistant</h4>
-                        <p className="text-[11px] text-[var(--text-secondary)] font-medium">Always available</p>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-[var(--text-primary)] text-sm">AI Assistant</h4>
+                            <span className="text-[10px] text-[#FFB000] font-mono">✦ Live</span>
+                        </div>
+                        <p className="text-[11px] text-[var(--text-muted)] font-light">Always available</p>
                     </div>
                 </div>
 
@@ -236,26 +243,26 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                 <div
                                     key={friend._id}
                                     onClick={() => onSelectChat({ type: 'friend', ...friend })}
-                                    className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?._id === friend._id
-                                        ? 'bg-[var(--bg-active)] border-[var(--border-strong)] shadow-sm'
-                                        : 'bg-[var(--bg-card)] border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]'
+                                    className={`p-3 rounded-xl flex items-center gap-3 cursor-pointer transition-all border relative ${activeChat?._id === friend._id
+                                        ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.1)]'
+                                        : 'bg-[#12100D]/40 border-[var(--border-subtle)] hover:bg-[#191510]/70 hover:border-[#FFB000]/20'
                                         }`}
                                 >
                                     <div className="relative flex-shrink-0">
                                         <img src={friend.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-[var(--border-subtle)]" />
-                                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-primary)] ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
+                                        <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-primary)] ${isOnline ? 'bg-[#FF6A00] shadow-[0_0_6px_#FF6A00]' : 'bg-[#7E6F5E]'}`}></div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-baseline mb-0.5">
-                                            <h4 className="text-sm text-[var(--text-primary)] font-bold truncate">{friend.name}</h4>
-                                            <span className={`text-[10px] font-bold ${isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                                                {isOnline ? 'Online' : 'Offline'}
+                                            <h4 className="text-sm text-[var(--text-primary)] font-semibold truncate">{friend.name}</h4>
+                                            <span className={`text-[10px] font-medium ${isOnline ? 'text-[#FFB000]' : 'text-[var(--text-muted)]'}`}>
+                                                {isOnline ? '● Online' : 'Offline'}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-[var(--text-secondary)] font-mono font-medium truncate">{friend.userTag}</p>
+                                        <p className="text-xs text-[var(--text-muted)] font-mono truncate">{friend.userTag}</p>
                                     </div>
                                     {unread[friend._id] > 0 && (
-                                        <div className="w-5 h-5 bg-[var(--accent-primary)] rounded-full flex items-center justify-center text-[10px] text-white font-bold shadow-lg animate-bounce cursor-default">
+                                        <div className="w-5 h-5 bg-[#FF6A00] text-[#090705] rounded-full flex items-center justify-center text-[10px] font-bold shadow-[0_0_10px_rgba(255,106,0,0.4)] cursor-default">
                                             {unread[friend._id]}
                                         </div>
                                     )}
@@ -325,12 +332,12 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     onClick={() => handleSendRequest(searchResult._id)}
                                     disabled={searchResult.requestSent || searchResult.isFriend || searchResult.hasPendingRequest}
                                     className={`px-5 py-2 rounded-full text-xs font-bold tracking-wide transition-all ${searchResult.isFriend
-                                        ? 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 cursor-default'
+                                        ? 'bg-white/10 text-white/60 cursor-default'
                                         : searchResult.hasPendingRequest
-                                            ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 cursor-default font-bold'
+                                            ? 'bg-[#FFB000]/20 text-[#FFB000] cursor-default font-bold'
                                             : searchResult.requestSent
-                                                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 cursor-default font-bold'
-                                                : 'bg-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] hover:bg-[var(--accent-hover)] font-bold'
+                                                ? 'bg-[#FF6A00]/20 text-[#FF6A00] cursor-default font-bold'
+                                                : 'bg-[#FF6A00] text-[#090705] hover:bg-[#E05D00] shadow-lg shadow-[rgba(255,106,0,0.3)] font-bold'
                                         }`}
                                 >
                                     {searchResult.isFriend ? 'Already Friends' :

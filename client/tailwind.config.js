@@ -24,6 +24,18 @@ export default {
                     hover: 'var(--accent-hover)',
                     glow: 'var(--accent-glow)',
                 },
+                // Hanasu warm palette tokens
+                hanasu: {
+                    orange: '#FF6A00',
+                    amber: '#FFB000',
+                    yellow: '#FFD166',
+                    bg: '#090705',
+                    surface: '#12100D',
+                    surface2: '#191510',
+                    text: '#FFF7EA',
+                    muted: '#B8AA98',
+                    border: 'rgba(255, 177, 0, 0.16)',
+                },
                 // Keep existing palettes for backward compatibility or specific use
                 dark: {
                     900: '#0f172a',
@@ -42,6 +54,7 @@ export default {
             },
             fontFamily: {
                 sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                display: ['Space Grotesk', 'Inter', 'sans-serif'],
                 mono: ['JetBrains Mono', 'monospace'],
                 japanese: ['Noto Serif JP', 'serif'],
             },

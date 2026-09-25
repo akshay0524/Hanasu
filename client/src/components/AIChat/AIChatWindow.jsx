@@ -46,21 +46,22 @@ const AIChatWindow = ({ onBack }) => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-dark-900/40 relative">
+        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative">
             {/* Minimal Header */}
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-dark-900 via-dark-900/90 to-transparent flex items-center gap-4">
+            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/90 to-transparent flex items-center gap-4">
                 <button
                     onClick={onBack}
-                    className="md:hidden p-2 rounded-full bg-white/5 text-white hover:bg-white/10 transition backdrop-blur-md"
+                    className="md:hidden p-2 rounded-full bg-white/5 text-[var(--text-primary)] hover:bg-white/10 transition backdrop-blur-md"
                 >
                     <FiChevronLeft size={20} />
                 </button>
-                <div className="flex items-center gap-3 bg-dark-800/60 p-2 pr-6 rounded-full border border-white/5 backdrop-blur-md">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+                <div className="flex items-center gap-3 bg-[var(--bg-panel)] p-2 pr-6 rounded-full border border-[var(--border-subtle)] backdrop-blur-md shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold shadow-[0_0_10px_rgba(255,106,0,0.3)]">
                         <FiCpu size={14} />
                     </div>
-                    <div>
-                        <h3 className="font-medium text-white text-sm">AI Assistant</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-[var(--text-primary)] text-sm">AI Assistant</h3>
+                        <span className="text-[10px] text-[#FFB000] font-mono">✦ Live</span>
                     </div>
                 </div>
             </div>
@@ -78,7 +79,7 @@ const AIChatWindow = ({ onBack }) => {
                         >
                             <div
                                 className={`max-w-[85%] px-5 py-3 rounded-2xl text-sm leading-relaxed backdrop-blur-sm shadow-sm ${isMe
-                                    ? 'bg-indigo-600 text-white rounded-tr-none font-medium'
+                                    ? 'bg-[#FF6A00] text-[#090705] rounded-tr-none font-semibold shadow-md shadow-[rgba(255,106,0,0.2)]'
                                     : 'bg-[var(--bg-card)] text-[var(--text-primary)] font-medium rounded-tl-none border border-[var(--border-subtle)]'
                                     }`}
                             >
@@ -91,9 +92,9 @@ const AIChatWindow = ({ onBack }) => {
                 {loading && (
                     <div className="flex justify-start">
                         <div className="bg-[var(--bg-card)] px-4 py-3 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex gap-1.5 items-center">
-                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[#FF6A00] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[#FFB000] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[#FFD166] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                         </div>
                     </div>
                 )}
@@ -114,7 +115,7 @@ const AIChatWindow = ({ onBack }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-10 h-10 bg-indigo-500 rounded-full text-white flex items-center justify-center hover:bg-indigo-600 transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 font-bold"
+                        className="w-10 h-10 bg-[#FF6A00] rounded-full text-[#090705] flex items-center justify-center hover:bg-[#E05D00] transition shadow-lg shadow-[rgba(255,106,0,0.25)] disabled:opacity-50 font-bold"
                     >
                         <FiSend className="ml-0.5" />
                     </button>

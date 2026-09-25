@@ -46,16 +46,27 @@ const ChatHome = () => {
                             <ChatWindow chat={activeChat} onBack={() => setActiveChat(null)} />
                         )
                     ) : (
-                        // Empty State (Zen Mode)
-                        <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-secondary)] p-8 text-center bg-[var(--bg-primary)]">
-                            <div className="w-32 h-32 border border-[var(--border-strong)] rounded-full flex items-center justify-center mb-8 relative shadow-sm">
-                                <span className="text-6xl text-[var(--text-primary)]/30 font-japanese font-bold">空</span>
-                                <div className="absolute inset-0 border border-[var(--border-subtle)] rounded-full animate-ping opacity-30" style={{ animationDuration: '3s' }}></div>
+                        // Empty State (Hanasu Zen Identity)
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[var(--bg-primary)] relative overflow-hidden select-none">
+                            {/* Subtle Ambient Warm Glow */}
+                            <div className="absolute w-96 h-96 rounded-full bg-gradient-to-tr from-[#FF6A00]/10 via-[#FFB000]/5 to-transparent blur-3xl pointer-events-none" />
+
+                            {/* Minimal Ring with Kanji */}
+                            <div className="w-28 h-28 rounded-full border border-[#FFB000]/30 flex items-center justify-center mb-6 relative shadow-[0_0_35px_rgba(255,106,0,0.15)] bg-[#12100D]/60 backdrop-blur-md">
+                                <span className="text-4xl text-[#FFB000] font-japanese font-medium tracking-widest">話す</span>
+                                <div className="absolute -inset-1 border border-[#FF6A00]/20 rounded-full animate-ping opacity-20 pointer-events-none" style={{ animationDuration: '4s' }}></div>
                             </div>
-                            <h2 className="text-3xl font-japanese font-bold text-[var(--text-primary)] mb-2">Hanasu</h2>
-                            <p className="max-w-md font-semibold text-sm tracking-wide text-[var(--text-secondary)]">
+
+                            <h2 className="text-2xl font-display font-bold tracking-[0.22em] text-[#FFF7EA] mb-1">HANASU</h2>
+                            <p className="text-[11px] uppercase tracking-[0.25em] text-[#FFB000]/90 font-medium mb-3">Talk freely · Stay connected</p>
+                            <p className="max-w-xs text-sm text-[var(--text-muted)] font-light leading-relaxed">
                                 Select a conversation to begin.
                             </p>
+
+                            <div className="mt-8 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--border-subtle)] bg-[#191510]/60 text-[11px] font-mono text-[var(--text-muted)]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6A00] shadow-[0_0_6px_#FF6A00]"></span>
+                                <span>Real-time presence</span>
+                            </div>
                         </div>
                     )}
                 </motion.div>

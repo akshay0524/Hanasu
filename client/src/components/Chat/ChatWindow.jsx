@@ -115,8 +115,8 @@ const ChatWindow = ({ chat, onBack }) => {
                         <img src={chat.avatar} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-[var(--border-subtle)]" />
                         <div>
                             <h3 className="font-bold text-[var(--text-primary)] text-sm">{chat.name}</h3>
-                            <span className={`text-[10px] font-bold block ${isOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                                {isOnline ? 'Online' : 'Offline'}
+                            <span className={`text-[10px] font-medium block ${isOnline ? 'text-[#FFB000]' : 'text-[var(--text-muted)]'}`}>
+                                {isOnline ? '● Online' : 'Offline'}
                             </span>
                         </div>
                     </div>
@@ -172,9 +172,9 @@ const ChatWindow = ({ chat, onBack }) => {
                 {isTyping && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start px-2">
                         <div className="bg-[var(--bg-card)] px-4 py-2 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex gap-1 items-center">
-                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce delay-75"></span>
-                            <span className="w-1.5 h-1.5 bg-[var(--text-secondary)] rounded-full animate-bounce delay-150"></span>
+                            <span className="w-1.5 h-1.5 bg-[#FF6A00] rounded-full animate-bounce"></span>
+                            <span className="w-1.5 h-1.5 bg-[#FFB000] rounded-full animate-bounce delay-75"></span>
+                            <span className="w-1.5 h-1.5 bg-[#FFD166] rounded-full animate-bounce delay-150"></span>
                         </div>
                     </motion.div>
                 )}
@@ -193,7 +193,7 @@ const ChatWindow = ({ chat, onBack }) => {
                     />
                     <button
                         type="submit"
-                        className="w-10 h-10 bg-[var(--accent-primary)] rounded-full text-white flex items-center justify-center hover:bg-[var(--accent-hover)] transition shadow-lg shadow-[var(--accent-glow)] group font-bold"
+                        className="w-10 h-10 bg-[#FF6A00] rounded-full text-[#090705] flex items-center justify-center hover:bg-[#E05D00] transition shadow-lg shadow-[rgba(255,106,0,0.3)] group font-bold"
                     >
                         <FiSend className="ml-0.5 group-hover:translate-x-0.5 transition-transform" />
                     </button>
