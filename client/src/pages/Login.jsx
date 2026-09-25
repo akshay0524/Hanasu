@@ -33,11 +33,17 @@ const FallingPetal = ({ delay }) => {
 };
 
 const Login = () => {
-    const { loginWithGoogle } = useAuth();
+    const { user, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
     const [petals, setPetals] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (user) {
+            navigate('/chat', { replace: true });
+        }
+    }, [user, navigate]);
 
     useEffect(() => {
         // Create 20 petals
@@ -53,7 +59,7 @@ const Login = () => {
             try {
                 // tokenResponse.access_token is sent to the backend
                 await loginWithGoogle(tokenResponse.access_token);
-                navigate('/');
+                navigate('/chat');
             } catch (err) {
                 console.error('Login Failed', err);
                 setError('Sign-in failed. Please try again.');
@@ -70,12 +76,21 @@ const Login = () => {
     });
 
     return (
-        <div className="h-dvh w-full flex items-center justify-center relative overflow-hidden bg-dark-900">
-            {/* Background Gradient & Pattern handled in CSS, but adding a glow here */}
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-dark-900/90 z-0"></div>
+        <div className="h-dvh w-full flex items-center justify-center relative overflow-hidden bg-[#0A0704]">
+            {/* Return to Landing Page */}
+            <button
+                onClick={() => navigate('/')}
+                className="absolute top-6 left-6 text-gray-400 hover:text-[#FFD166] flex items-center gap-2 text-xs uppercase tracking-widest transition-colors z-20 font-medium"
+            >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                Return to Home
+            </button>
 
-            {/* The Moon */}
-            <div className="absolute top-10 right-10 w-32 h-32 bg-yellow-100/10 rounded-full blur-3xl" />
+            {/* Background Gradient & Pattern handled in CSS, but adding a glow here */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#120C07] to-[#0A0704] z-0"></div>
+
+            {/* The Warm Amber Moon */}
+            <div className="absolute top-10 right-10 w-40 h-40 bg-gradient-to-br from-[#FF6A00]/20 to-[#FFD166]/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Falling Petals */}
             {petals.map((delay, i) => <FallingPetal key={i} delay={delay} />)}
@@ -84,7 +99,7 @@ const Login = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="glass-panel p-10 rounded-3xl w-full max-w-sm text-center z-10 relative shadow-2xl shadow-black/40 flex flex-col items-center"
+                className="glass-panel p-10 rounded-3xl w-full max-w-sm text-center z-10 relative shadow-2xl shadow-black/60 border border-white/10 flex flex-col items-center bg-[#120C07]/80 backdrop-blur-xl"
             >
                 {/* Minimal Logo / Kanji */}
                 <motion.div
@@ -96,7 +111,7 @@ const Login = () => {
                     <h1 className="text-6xl font-japanese font-bold text-white mb-2 tracking-widest text-shadow">
                         話す
                     </h1>
-                    <h2 className="text-xl text-sakura uppercase tracking-[0.3em] font-light">
+                    <h2 className="text-xl text-[#FFB000] uppercase tracking-[0.3em] font-light">
                         Hanasu
                     </h2>
                 </motion.div>
@@ -104,19 +119,19 @@ const Login = () => {
                 <p className="text-gray-400 mb-10 text-sm font-light leading-relaxed">
                     Connect instantly.<br />
                     Speak freely.<br />
-                    <span className="text-xs text-gray-500 mt-2 block">Minimal AI Chat Experience</span>
+                    <span className="text-xs text-[#FFD166]/70 mt-2 block">Conversations, with feeling.</span>
                 </p>
 
-                {/* Custom Google Sign-In Button — avoids COOP iframe issue */}
+                {/* Custom Google Sign-In Button */}
                 <div className="relative group w-full">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-sakura to-purple-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                    <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6A00] via-[#FFB000] to-[#FFD166] rounded-full blur opacity-35 group-hover:opacity-65 transition duration-500"></div>
                     <motion.button
                         id="google-signin-btn"
                         onClick={() => googleLogin()}
                         disabled={loading}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-white/10 hover:bg-white/15 border border-white/10 rounded-full text-white text-sm font-medium tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="relative w-full flex items-center justify-center gap-3 px-6 py-3 bg-[#0A0704]/90 hover:bg-[#0A0704] border border-[#FFB000]/40 rounded-full text-white text-sm font-medium tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                     >
                         {loading ? (
                             /* Spinner */
