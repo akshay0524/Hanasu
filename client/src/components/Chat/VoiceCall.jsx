@@ -242,7 +242,7 @@ const VoiceCallOverlay = ({ socket, currentUser, callState, onCallEnd }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: -20 }}
                 transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-                className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[320px] sm:w-[380px]"
+                className="fixed top-4 inset-x-4 max-w-[380px] mx-auto z-[100]"
             >
                 <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl">
                     {/* Green gradient header */}
@@ -310,7 +310,7 @@ const IncomingCallBanner = ({ callInfo, onAccept, onReject }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -60 }}
             transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[320px] sm:w-[380px]"
+            className="fixed top-4 inset-x-4 max-w-[380px] mx-auto z-[100]"
         >
             <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl p-5">
                 <div className="flex items-center gap-4 mb-4">
