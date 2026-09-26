@@ -1,90 +1,343 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getChatHistory } from '../../services/chatApi';
+import {
+    getChatHistory,
+    getConversationMessages,
+    markConversationAsRead,
+} from '../../services/chatApi';
+import { getCatchMeUp, getSmartReplies } from '../../services/aiApi';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
-import { removeFriend } from '../../services/userApi';
-import { FiSend, FiChevronLeft, FiMoreVertical, FiTrash2 } from 'react-icons/fi';
+import { removeFriend, getFriends } from '../../services/userApi';
+import {
+    FiSend,
+    FiChevronLeft,
+    FiMoreVertical,
+    FiTrash2,
+    FiUsers,
+    FiInfo,
+    FiCopy,
+    FiCornerUpLeft,
+    FiZap,
+    FiFileText,
+    FiHelpCircle,
+    FiGlobe,
+    FiBookOpen,
+    FiCheckSquare,
+    FiMessageSquare,
+} from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import GroupInfoModal from './GroupInfoModal';
+import CatchMeUpModal from './CatchMeUpModal';
+import AIMessageActionModal from './AIMessageActionModal';
 
 const ChatWindow = ({ chat, onBack }) => {
     const { user } = useAuth();
     const { socket, onlineUsers } = useSocket();
+
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
+    const [activeGroup, setActiveGroup] = useState(chat);
+    const [friends, setFriends] = useState([]);
+
+    // Modals
+    const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+    const [isCatchMeUpOpen, setIsCatchMeUpOpen] = useState(false);
+    const [catchMeUpLoading, setCatchMeUpLoading] = useState(false);
+    const [catchMeUpData, setCatchMeUpData] = useState(null);
+
+    // AI Action Modal state
+    const [aiActionModal, setAiActionModal] = useState({
+        isOpen: false,
+        actionType: null,
+        message: null,
+    });
+
+    // Smart Reply Suggestions (contextual bar above composer)
+    const [smartReplies, setSmartReplies] = useState([]);
+    const [loadingReplies, setLoadingReplies] = useState(false);
+
+    // Context menu / dropdown for a message
+    const [activeMenuMessageId, setActiveMenuMessageId] = useState(null);
+    const [highlightedMessageId, setHighlightedMessageId] = useState(null);
+    const [notificationToast, setNotificationToast] = useState('');
+
     const messagesEndRef = useRef(null);
+    const messageElementsRef = useRef({});
+
+    const isGroup = activeGroup?.type === 'group';
+    const conversationId = isGroup
+        ? String(activeGroup._id)
+        : activeGroup?.conversationId || null;
 
     useEffect(() => {
+        setActiveGroup(chat);
+        setSmartReplies([]);
+        setActiveMenuMessageId(null);
+    }, [chat]);
+
+    useEffect(() => {
+        getFriends().then(setFriends).catch(() => {});
+    }, []);
+
+    // Load Chat History
+    useEffect(() => {
         if (!chat) return;
-        const loadHistory = async () => {
+
+        const loadMessages = async () => {
             try {
-                const data = await getChatHistory(chat._id);
-                setMessages(data);
-            } catch (error) { console.error(error); }
-        };
-        loadHistory();
-
-        if (socket) {
-            socket.on('receive_message', (newMessage) => {
-                if (
-                    (newMessage.sender === chat._id && newMessage.receiver === user._id) ||
-                    (newMessage.sender === user._id && newMessage.receiver === chat._id)
-                ) {
-                    setMessages((prev) => [...prev, newMessage]);
+                if (isGroup) {
+                    const data = await getConversationMessages(chat._id);
+                    setMessages(data || []);
+                    markConversationAsRead(chat._id).catch(() => {});
+                } else {
+                    const data = await getChatHistory(chat._id);
+                    setMessages(data || []);
                 }
-            });
-        }
-        return () => { if (socket) socket.off('receive_message'); }
-    }, [chat, socket, user._id]);
+            } catch (err) {
+                console.error('Error loading chat messages:', err);
+            }
+        };
 
+        loadMessages();
+
+        // Socket room join
+        if (socket && isGroup) {
+            socket.emit('join_conversation', chat._id);
+        }
+
+        return () => {
+            if (socket && isGroup) {
+                socket.emit('leave_conversation', chat._id);
+            }
+        };
+    }, [chat, isGroup, socket]);
+
+    // Socket message receiver
+    useEffect(() => {
+        if (!socket || !chat) return;
+
+        const handleReceiveMessage = (newMessage) => {
+            const isMe = String(newMessage.sender?._id || newMessage.sender) === String(user._id);
+
+            if (isGroup) {
+                const msgConvId = String(newMessage.conversation?._id || newMessage.conversation);
+                if (msgConvId === String(chat._id)) {
+                    setMessages((prev) => {
+                        const exists = prev.some((m) => String(m._id) === String(newMessage._id));
+                        if (exists) return prev;
+                        return [...prev, newMessage];
+                    });
+                }
+            } else {
+                const partnerId = String(chat._id);
+                const senderId = String(newMessage.sender?._id || newMessage.sender);
+                const receiverId = String(newMessage.receiver?._id || newMessage.receiver);
+
+                if (
+                    (senderId === partnerId && receiverId === String(user._id)) ||
+                    (senderId === String(user._id) && receiverId === partnerId)
+                ) {
+                    setMessages((prev) => {
+                        const exists = prev.some((m) => String(m._id) === String(newMessage._id));
+                        if (exists) return prev;
+                        return [...prev, newMessage];
+                    });
+                }
+            }
+        };
+
+        socket.on('receive_message', handleReceiveMessage);
+        return () => {
+            socket.off('receive_message', handleReceiveMessage);
+        };
+    }, [socket, chat, isGroup, user._id]);
+
+    // Auto-scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const [isTyping, setIsTyping] = useState(false);
+    // Typing Indicators
+    const [typingUsers, setTypingUsers] = useState(new Set());
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !chat) return;
 
-        socket.on('typing', ({ senderId }) => {
-            if (senderId === chat._id) setIsTyping(true);
-        });
+        if (isGroup) {
+            const handleGroupTyping = ({ conversationId: cId, senderId, senderName }) => {
+                if (String(cId) === String(chat._id) && String(senderId) !== String(user._id)) {
+                    setTypingUsers((prev) => new Set(prev).add(senderName || 'Someone'));
+                }
+            };
 
-        socket.on('stop_typing', ({ senderId }) => {
-            if (senderId === chat._id) setIsTyping(false);
-        });
+            const handleGroupStopTyping = ({ conversationId: cId, senderId }) => {
+                if (String(cId) === String(chat._id)) {
+                    setTypingUsers(new Set());
+                }
+            };
 
-        return () => {
-            socket.off('typing');
-            socket.off('stop_typing');
-        };
-    }, [socket, chat]);
+            socket.on('group_typing', handleGroupTyping);
+            socket.on('group_stop_typing', handleGroupStopTyping);
 
-    let typingTimeout = null;
+            return () => {
+                socket.off('group_typing', handleGroupTyping);
+                socket.off('group_stop_typing', handleGroupStopTyping);
+            };
+        } else {
+            const handleTyping = ({ senderId }) => {
+                if (String(senderId) === String(chat._id)) {
+                    setTypingUsers(new Set([chat.name || 'Friend']));
+                }
+            };
+
+            const handleStopTyping = ({ senderId }) => {
+                if (String(senderId) === String(chat._id)) {
+                    setTypingUsers(new Set());
+                }
+            };
+
+            socket.on('typing', handleTyping);
+            socket.on('stop_typing', handleStopTyping);
+
+            return () => {
+                socket.off('typing', handleTyping);
+                socket.off('stop_typing', handleStopTyping);
+            };
+        }
+    }, [socket, chat, isGroup, user._id]);
+
+    let typingTimeout = useRef(null);
+
     const handleInput = (e) => {
         setInput(e.target.value);
-        if (!socket) return;
+        if (!socket || !chat) return;
 
-        socket.emit('typing', { senderId: user._id, receiverId: chat._id });
+        if (isGroup) {
+            socket.emit('group_typing', {
+                conversationId: chat._id,
+                senderId: user._id,
+                senderName: user.name,
+            });
 
-        if (typingTimeout) clearTimeout(typingTimeout);
+            if (typingTimeout.current) clearTimeout(typingTimeout.current);
+            typingTimeout.current = setTimeout(() => {
+                socket.emit('group_stop_typing', {
+                    conversationId: chat._id,
+                    senderId: user._id,
+                });
+            }, 2000);
+        } else {
+            socket.emit('typing', { senderId: user._id, receiverId: chat._id });
 
-        typingTimeout = setTimeout(() => {
-            socket.emit('stop_typing', { senderId: user._id, receiverId: chat._id });
-        }, 2000);
+            if (typingTimeout.current) clearTimeout(typingTimeout.current);
+            typingTimeout.current = setTimeout(() => {
+                socket.emit('stop_typing', { senderId: user._id, receiverId: chat._id });
+            }, 2000);
+        }
     };
 
     const handleSend = (e) => {
         e.preventDefault();
-        if (!input.trim()) return;
-        if (socket) {
-            const msgData = { senderId: user._id, receiverId: chat._id, content: input };
-            socket.emit('send_message', msgData);
+        if (!input.trim() || !socket) return;
+
+        if (isGroup) {
+            socket.emit('send_message', {
+                senderId: user._id,
+                conversationId: chat._id,
+                content: input.trim(),
+            });
+            socket.emit('group_stop_typing', {
+                conversationId: chat._id,
+                senderId: user._id,
+            });
+        } else {
+            socket.emit('send_message', {
+                senderId: user._id,
+                receiverId: chat._id,
+                content: input.trim(),
+            });
             socket.emit('stop_typing', { senderId: user._id, receiverId: chat._id });
         }
+
         setInput('');
+        setSmartReplies([]);
     };
 
-    const [showMenu, setShowMenu] = useState(false);
+    // Catch Me Up trigger
+    const handleTriggerCatchMeUp = async () => {
+        setIsCatchMeUpOpen(true);
+        setCatchMeUpLoading(true);
+        try {
+            const targetConvId = isGroup ? chat._id : conversationId || chat._id;
+            const res = await getCatchMeUp(targetConvId);
+            setCatchMeUpData(res);
+        } catch (err) {
+            setCatchMeUpData({
+                unreadCount: 0,
+                summary: 'Could not load summary. Please check your network or try again.',
+                keyPoints: [],
+                decisions: [],
+                actionItems: [],
+                unresolvedQuestions: [],
+                importantMessages: [],
+            });
+        } finally {
+            setCatchMeUpLoading(false);
+        }
+    };
+
+    // Jump to specific message from Catch Me Up
+    const handleJumpToMessage = (targetMsgId) => {
+        setHighlightedMessageId(targetMsgId);
+        const element = messageElementsRef.current[targetMsgId];
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        setTimeout(() => {
+            setHighlightedMessageId(null);
+        }, 3500);
+    };
+
+    // Smart Reply generation for a message
+    const handleTriggerSmartReplies = async (msg) => {
+        setLoadingReplies(true);
+        try {
+            const contextText = messages
+                .slice(-6)
+                .map((m) => `${m.sender?.name || 'User'}: ${m.content}`)
+                .join('\n');
+            const res = await getSmartReplies({
+                messageId: msg._id,
+                content: msg.content,
+                context: contextText,
+            });
+            setSmartReplies(res.suggestions || []);
+        } catch (err) {
+            setSmartReplies(['Got it!', 'Sounds good.', 'Let me check on that.']);
+        } finally {
+            setLoadingReplies(false);
+            setActiveMenuMessageId(null);
+        }
+    };
+
+    const handleCopyMessage = (text) => {
+        navigator.clipboard.writeText(text);
+        showToast('Copied to clipboard');
+        setActiveMenuMessageId(null);
+    };
+
+    const handleQuoteReply = (msg) => {
+        const senderName = msg.sender?.name || 'User';
+        setInput(`> ${senderName}: "${msg.content}"\n`);
+        setActiveMenuMessageId(null);
+    };
+
+    const showToast = (text) => {
+        setNotificationToast(text);
+        setTimeout(() => setNotificationToast(''), 3000);
+    };
+
+    const [showDirectMenu, setShowDirectMenu] = useState(false);
 
     const handleUnfriend = async () => {
         if (window.confirm(`Are you sure you want to remove ${chat.name}?`)) {
@@ -93,115 +346,415 @@ const ChatWindow = ({ chat, onBack }) => {
                 onBack();
                 window.location.reload();
             } catch (error) {
-                alert("Failed to remove friend");
+                alert('Failed to remove friend');
             }
         }
     };
 
-    const isOnline = onlineUsers?.has(String(chat._id));
+    const isDirectOnline = !isGroup && onlineUsers?.has(String(chat._id));
 
     return (
-        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative">
-            {/* Minimal Floating Header */}
-            <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/95 to-transparent border-b border-[var(--border-subtle)]/50 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+        <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative select-none">
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 z-20 p-3.5 bg-gradient-to-b from-[#12100D] via-[#12100D]/95 to-transparent border-b border-[var(--border-subtle)]/60 flex items-center justify-between backdrop-blur-md">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
-                        className="md:hidden p-2 rounded-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition backdrop-blur-md shadow-sm"
+                        className="md:hidden p-2 rounded-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition shadow-sm"
                     >
-                        <FiChevronLeft size={20} />
+                        <FiChevronLeft size={18} />
                     </button>
-                    <div className="flex items-center gap-3 bg-[var(--bg-panel)] p-2 pr-6 rounded-full border border-[var(--border-subtle)] shadow-sm backdrop-blur-md">
-                        <img src={chat.avatar} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-[var(--border-subtle)]" />
-                        <div>
-                            <h3 className="font-bold text-[var(--text-primary)] text-sm">{chat.name}</h3>
-                            <span className={`text-[10px] font-medium block ${isOnline ? 'text-[#FFB000]' : 'text-[var(--text-muted)]'}`}>
-                                {isOnline ? '● Online' : 'Offline'}
+
+                    <div
+                        onClick={() => isGroup && setIsGroupInfoOpen(true)}
+                        className={`flex items-center gap-3 bg-[var(--bg-panel)] p-1.5 pr-4 rounded-full border border-[var(--border-subtle)] shadow-sm backdrop-blur-md ${
+                            isGroup ? 'cursor-pointer hover:border-[#FFB000]/40 transition' : ''
+                        }`}
+                    >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold text-xs flex-shrink-0">
+                            {activeGroup.avatar ? (
+                                <img
+                                    src={activeGroup.avatar}
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover rounded-full"
+                                />
+                            ) : isGroup ? (
+                                <FiUsers size={14} />
+                            ) : (
+                                <span>{activeGroup.name?.charAt(0) || 'U'}</span>
+                            )}
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <h3 className="font-bold text-[var(--text-primary)] text-xs truncate max-w-[140px] md:max-w-[200px]">
+                                    {activeGroup.name}
+                                </h3>
+                                {isGroup && <FiInfo size={11} className="text-[#FFB000] opacity-70" />}
+                            </div>
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono block">
+                                {isGroup
+                                    ? `${activeGroup.participants?.length || 0} members`
+                                    : isDirectOnline
+                                    ? '● Online'
+                                    : 'Offline'}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="relative">
+                <div className="flex items-center gap-2">
+                    {/* ✨ Catch Me Up Button */}
                     <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        className="p-2 rounded-full bg-[var(--bg-panel)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition backdrop-blur-md border border-[var(--border-subtle)] shadow-sm"
+                        onClick={handleTriggerCatchMeUp}
+                        className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FF6A00]/20 to-[#FFB000]/20 border border-[#FFB000]/50 text-[#FFB000] hover:bg-[#FF6A00]/30 text-xs font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(255,106,0,0.15)] transition"
+                        title="Get instant summary of missed messages"
                     >
-                        <FiMoreVertical />
+                        <span className="text-sm">✨</span>
+                        <span className="hidden sm:inline">Catch Me Up</span>
                     </button>
-                    {showMenu && (
-                        <div className="absolute right-0 top-12 bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-xl shadow-xl w-40 overflow-hidden z-50">
+
+                    {/* Direct chat menu */}
+                    {!isGroup && (
+                        <div className="relative">
                             <button
-                                onClick={handleUnfriend}
-                                className="w-full text-left px-4 py-3 text-red-600 dark:text-red-400 font-semibold hover:bg-red-500/10 text-sm flex items-center gap-2"
+                                onClick={() => setShowDirectMenu(!showDirectMenu)}
+                                className="p-2 rounded-full bg-[var(--bg-panel)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition border border-[var(--border-subtle)] shadow-sm"
                             >
-                                <FiTrash2 size={16} /> Unfriend
+                                <FiMoreVertical size={16} />
                             </button>
+                            {showDirectMenu && (
+                                <div className="absolute right-0 top-12 bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-xl shadow-xl w-36 overflow-hidden z-50 animate-fade-in">
+                                    <button
+                                        onClick={handleUnfriend}
+                                        className="w-full text-left px-3 py-2.5 text-red-400 font-semibold hover:bg-red-500/10 text-xs flex items-center gap-2"
+                                    >
+                                        <FiTrash2 size={14} /> Unfriend
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 pt-24 pb-4 space-y-3 custom-scrollbar">
+            {/* Notification Toast */}
+            {notificationToast && (
+                <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-xl bg-[#FF6A00] text-[#090705] text-xs font-bold shadow-xl animate-fade-in">
+                    {notificationToast}
+                </div>
+            )}
+
+            {/* Messages Scroll Area */}
+            <div className="flex-1 overflow-y-auto p-4 pt-20 pb-4 space-y-3 custom-scrollbar">
                 <AnimatePresence initial={false}>
                     {messages.map((msg, index) => {
-                        const isMe = msg.sender === user._id;
+                        const senderId = String(msg.sender?._id || msg.sender);
+                        const isMe = senderId === String(user._id);
+                        const isSystem = msg.messageType === 'system';
+                        const isHighlighted = highlightedMessageId === String(msg._id);
+
+                        if (isSystem) {
+                            return (
+                                <div key={msg._id || index} className="flex justify-center my-2">
+                                    <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-[#1C1813] text-[#FFB000]/80 border border-[#FFB000]/20 font-mono shadow-sm">
+                                        ✦ {msg.content}
+                                    </span>
+                                </div>
+                            );
+                        }
+
                         return (
                             <motion.div
-                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                key={msg._id || index}
+                                ref={(el) => (messageElementsRef.current[String(msg._id)] = el)}
+                                initial={{ opacity: 0, y: 8, scale: 0.98 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                key={index}
-                                className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                                className={`flex ${isMe ? 'justify-end' : 'justify-start'} group relative`}
                             >
                                 <div
-                                    className={`max-w-[75%] px-5 py-2.5 rounded-2xl text-sm leading-relaxed backdrop-blur-sm shadow-sm ${isMe
-                                        ? 'bg-[var(--accent-primary)] text-white font-medium rounded-tr-none'
-                                        : 'bg-[var(--bg-card)] text-[var(--text-primary)] font-semibold rounded-tl-none border border-[var(--border-subtle)]'
-                                        }`}
+                                    className={`flex gap-2 max-w-[80%] md:max-w-[70%] ${
+                                        isMe ? 'flex-row-reverse' : 'flex-row'
+                                    }`}
                                 >
-                                    <p>{msg.content}</p>
-                                    <span className={`text-[10px] mt-1 block tracking-wider font-medium opacity-75 ${isMe ? 'text-white' : 'text-[var(--text-secondary)]'}`}>
-                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
+                                    {/* Member Avatar in group */}
+                                    {isGroup && !isMe && (
+                                        <img
+                                            src={msg.sender?.avatar || 'https://api.dicebear.com/7.x/identicon/svg'}
+                                            alt="Sender"
+                                            className="w-7 h-7 rounded-full object-cover border border-[var(--border-subtle)] flex-shrink-0 mt-1"
+                                        />
+                                    )}
+
+                                    {/* Bubble */}
+                                    <div
+                                        className={`relative px-4 py-2.5 rounded-2xl text-xs leading-relaxed backdrop-blur-sm transition-all ${
+                                            isHighlighted ? 'ring-2 ring-[#FF6A00] shadow-[0_0_20px_#FF6A00]' : ''
+                                        } ${
+                                            isMe
+                                                ? 'bg-[#FF6A00] text-[#090705] font-semibold rounded-tr-none shadow-md shadow-[#FF6A00]/20'
+                                                : 'bg-[#181410] text-[#FFF7EA] rounded-tl-none border border-[var(--border-subtle)] shadow-sm'
+                                        }`}
+                                    >
+                                        {/* Sender Name in Group Chat */}
+                                        {isGroup && !isMe && (
+                                            <p className="text-[10px] font-bold text-[#FFB000] mb-0.5 truncate">
+                                                {msg.sender?.name || 'Member'}
+                                            </p>
+                                        )}
+
+                                        <p className="whitespace-pre-wrap select-text">{msg.content}</p>
+
+                                        <div className="flex items-center justify-between gap-3 mt-1 opacity-75">
+                                            <span className="text-[9px] font-mono">
+                                                {new Date(msg.createdAt).toLocaleTimeString([], {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </span>
+                                        </div>
+
+                                        {/* Context Menu Trigger Icon (Hover or tap) */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMenuMessageId(
+                                                    activeMenuMessageId === msg._id ? null : msg._id
+                                                );
+                                            }}
+                                            className={`absolute top-1.5 ${
+                                                isMe ? '-left-7' : '-right-7'
+                                            } p-1 text-[var(--text-muted)] hover:text-[#FFB000] opacity-0 group-hover:opacity-100 transition rounded-lg hover:bg-white/10`}
+                                            title="Message Actions"
+                                        >
+                                            <FiMoreVertical size={13} />
+                                        </button>
+
+                                        {/* Unified AI Action Menu Dropdown (Phase 14) */}
+                                        {activeMenuMessageId === msg._id && (
+                                            <div
+                                                className={`absolute z-30 top-6 ${
+                                                    isMe ? 'right-0' : 'left-0'
+                                                } bg-[#191510] border border-[#FFB000]/30 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-xl animate-fade-in`}
+                                            >
+                                                {/* Copy */}
+                                                <button
+                                                    onClick={() => handleCopyMessage(msg.content)}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiCopy size={12} className="text-[var(--text-muted)]" /> Copy text
+                                                </button>
+
+                                                {/* Reply */}
+                                                <button
+                                                    onClick={() => handleQuoteReply(msg)}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiCornerUpLeft size={12} className="text-[var(--text-muted)]" /> Quote & Reply
+                                                </button>
+
+                                                <div className="h-[1px] bg-[var(--border-subtle)] my-1"></div>
+                                                <div className="px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-[#FFB000]">
+                                                    ✨ AI Actions
+                                                </div>
+
+                                                {/* Summarize */}
+                                                <button
+                                                    onClick={() => {
+                                                        setAiActionModal({
+                                                            isOpen: true,
+                                                            actionType: 'summarize',
+                                                            message: msg,
+                                                        });
+                                                        setActiveMenuMessageId(null);
+                                                    }}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiFileText size={12} className="text-[#FF6A00]" /> Summarize
+                                                </button>
+
+                                                {/* Explain */}
+                                                <button
+                                                    onClick={() => {
+                                                        setAiActionModal({
+                                                            isOpen: true,
+                                                            actionType: 'explain',
+                                                            message: msg,
+                                                        });
+                                                        setActiveMenuMessageId(null);
+                                                    }}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiHelpCircle size={12} className="text-[#FFB000]" /> Explain
+                                                </button>
+
+                                                {/* Translate */}
+                                                <button
+                                                    onClick={() => {
+                                                        setAiActionModal({
+                                                            isOpen: true,
+                                                            actionType: 'translate',
+                                                            message: msg,
+                                                        });
+                                                        setActiveMenuMessageId(null);
+                                                    }}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiGlobe size={12} className="text-[#FFD166]" /> Translate
+                                                </button>
+
+                                                {/* Smart Reply */}
+                                                <button
+                                                    onClick={() => handleTriggerSmartReplies(msg)}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiMessageSquare size={12} className="text-emerald-400" /> Smart Reply
+                                                </button>
+
+                                                {/* Remember */}
+                                                <button
+                                                    onClick={() => {
+                                                        setAiActionModal({
+                                                            isOpen: true,
+                                                            actionType: 'remember',
+                                                            message: msg,
+                                                        });
+                                                        setActiveMenuMessageId(null);
+                                                    }}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiBookOpen size={12} className="text-sky-400" /> Remember fact
+                                                </button>
+
+                                                {/* Task */}
+                                                <button
+                                                    onClick={() => {
+                                                        setAiActionModal({
+                                                            isOpen: true,
+                                                            actionType: 'task',
+                                                            message: msg,
+                                                        });
+                                                        setActiveMenuMessageId(null);
+                                                    }}
+                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
+                                                >
+                                                    <FiCheckSquare size={12} className="text-purple-400" /> Extract Task
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         );
                     })}
                 </AnimatePresence>
-                {isTyping && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start px-2">
-                        <div className="bg-[var(--bg-card)] px-4 py-2 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex gap-1 items-center">
-                            <span className="w-1.5 h-1.5 bg-[#FF6A00] rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-[#FFB000] rounded-full animate-bounce delay-75"></span>
-                            <span className="w-1.5 h-1.5 bg-[#FFD166] rounded-full animate-bounce delay-150"></span>
+
+                {/* Typing indicator */}
+                {typingUsers.size > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start px-2">
+                        <div className="bg-[#181410] px-3.5 py-1.5 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex items-center gap-2">
+                            <span className="text-[10px] text-[var(--text-muted)] font-mono">
+                                {Array.from(typingUsers).join(', ')} is typing...
+                            </span>
+                            <div className="flex gap-1 items-center">
+                                <span className="w-1.5 h-1.5 bg-[#FF6A00] rounded-full animate-bounce"></span>
+                                <span className="w-1.5 h-1.5 bg-[#FFB000] rounded-full animate-bounce delay-75"></span>
+                                <span className="w-1.5 h-1.5 bg-[#FFD166] rounded-full animate-bounce delay-150"></span>
+                            </div>
                         </div>
                     </motion.div>
                 )}
+
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Floating Input */}
-            <div className="p-4 bg-transparent">
-                <form onSubmit={handleSend} className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-full px-3 py-2 flex items-center gap-2 shadow-lg backdrop-blur-xl">
+            {/* Smart Reply Suggestions Bar (Phase 11) */}
+            {smartReplies.length > 0 && (
+                <div className="px-4 pb-2 flex items-center gap-2 overflow-x-auto custom-scrollbar animate-fade-in">
+                    <span className="text-[10px] font-bold text-[#FFB000] flex items-center gap-1 flex-shrink-0">
+                        <FiZap size={11} /> Suggestions:
+                    </span>
+                    {smartReplies.map((reply, i) => (
+                        <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                                setInput(reply);
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-[#1C1813] border border-[#FFB000]/40 text-xs text-[#FFF7EA] hover:bg-[#FF6A00]/20 hover:border-[#FF6A00] transition flex-shrink-0 font-medium"
+                        >
+                            {reply}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setSmartReplies([])}
+                        className="text-[10px] text-[var(--text-muted)] hover:text-white ml-auto"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            )}
+
+            {/* Message Input Composer */}
+            <div className="p-4 pt-1 bg-transparent">
+                <form
+                    onSubmit={handleSend}
+                    className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-full px-3 py-2 flex items-center gap-2 shadow-xl backdrop-blur-xl"
+                >
                     <input
                         type="text"
-                        className="flex-1 bg-transparent text-[var(--text-primary)] font-semibold px-4 py-2 focus:outline-none text-sm placeholder-[var(--text-secondary)]/70"
-                        placeholder="Type a message..."
+                        className="flex-1 bg-transparent text-[var(--text-primary)] font-semibold px-4 py-2 focus:outline-none text-xs md:text-sm placeholder-[var(--text-secondary)]/70"
+                        placeholder={
+                            isGroup
+                                ? `Message ${activeGroup.name}...`
+                                : `Message ${activeGroup.name}...`
+                        }
                         value={input}
                         onChange={handleInput}
                     />
                     <button
                         type="submit"
-                        className="w-10 h-10 bg-[#FF6A00] rounded-full text-[#090705] flex items-center justify-center hover:bg-[#E05D00] transition shadow-lg shadow-[rgba(255,106,0,0.3)] group font-bold"
+                        className="w-10 h-10 bg-[#FF6A00] rounded-full text-[#090705] flex items-center justify-center hover:bg-[#E05D00] transition shadow-lg shadow-[rgba(255,106,0,0.3)] font-bold flex-shrink-0"
                     >
-                        <FiSend className="ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+                        <FiSend className="ml-0.5" />
                     </button>
                 </form>
             </div>
+
+            {/* Modals */}
+            {isGroup && (
+                <GroupInfoModal
+                    isOpen={isGroupInfoOpen}
+                    onClose={() => setIsGroupInfoOpen(false)}
+                    group={activeGroup}
+                    currentUser={user}
+                    friends={friends}
+                    onlineUsers={onlineUsers}
+                    onGroupUpdated={(updated) => setActiveGroup(updated)}
+                    onLeaveGroup={() => onBack()}
+                />
+            )}
+
+            <CatchMeUpModal
+                isOpen={isCatchMeUpOpen}
+                onClose={() => setIsCatchMeUpOpen(false)}
+                loading={catchMeUpLoading}
+                data={catchMeUpData}
+                conversationName={activeGroup.name}
+                onJumpToMessage={handleJumpToMessage}
+            />
+
+            <AIMessageActionModal
+                isOpen={aiActionModal.isOpen}
+                onClose={() =>
+                    setAiActionModal({ isOpen: false, actionType: null, message: null })
+                }
+                actionType={aiActionModal.actionType}
+                message={aiActionModal.message}
+                conversationId={conversationId}
+                onSuccessNotification={showToast}
+            />
         </div>
     );
 };
-
 
 export default ChatWindow;

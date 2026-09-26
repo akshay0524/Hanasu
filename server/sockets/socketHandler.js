@@ -9,9 +9,7 @@ const socketToUser = new Map();
 
 const socketHandler = (io) => {
     io.on('connection', (socket) => {
-        console.log(`User Connected: ${socket.id}`);
-
-        // Join a room based on user ID
+        // Join user room
         socket.on('join_room', async (rawUserId) => {
             if (!rawUserId) return;
             const userId = String(rawUserId);
@@ -34,16 +32,14 @@ const socketHandler = (io) => {
                 console.error('Error updating lastSeen:', err.message);
             }
 
-            // If user just transitioned from offline to online, broadcast to everyone
+            // If user transitioned from offline to online, broadcast
             if (wasOffline) {
                 io.emit('user_status_change', { userId, status: 'online' });
             }
 
-            // Immediately send current list of all online user IDs to the connected client
+            // Send current list of online user IDs
             const onlineList = Array.from(userSockets.keys());
             socket.emit('online_users_list', onlineList);
-
-            console.log(`User ${userId} joined room (${sockets.size} active sockets). Total online users: ${onlineList.length}`);
         });
 
         // Request current online users list
@@ -52,37 +48,83 @@ const socketHandler = (io) => {
             socket.emit('online_users_list', onlineList);
         });
 
-        // Send Message
+        // Join a specific conversation room (for group or direct)
+        socket.on('join_conversation', (rawConvId) => {
+            if (!rawConvId) return;
+            const convId = String(rawConvId);
+            socket.join(convId);
+        });
+
+        // Leave a conversation room
+        socket.on('leave_conversation', (rawConvId) => {
+            if (!rawConvId) return;
+            const convId = String(rawConvId);
+            socket.leave(convId);
+        });
+
+        // Send Message (supports both group with conversationId and direct with receiverId/conversationId)
         socket.on('send_message', async (data) => {
-            const { senderId, receiverId, content } = data;
-            if (!senderId || !receiverId || !content) return;
+            const { senderId, receiverId, conversationId, content } = data;
+            if (!senderId || !content || (!receiverId && !conversationId)) return;
 
             try {
-                // Save to MongoDB
-                const newMessage = await Message.create({
-                    sender: senderId,
-                    receiver: receiverId,
-                    content,
-                    read: false,
-                });
+                let targetConversationId = conversationId;
+                let convDoc = null;
 
-                // Update the conversation's last message
-                try {
-                    await Conversation.updateLastMessage(senderId, receiverId, newMessage._id);
-                } catch (convErr) {
-                    console.error('Error updating conversation:', convErr.message);
+                if (targetConversationId) {
+                    convDoc = await Conversation.findById(targetConversationId);
+                } else if (receiverId) {
+                    convDoc = await Conversation.getOrCreate(senderId, receiverId);
+                    targetConversationId = convDoc._id;
                 }
 
-                // Emit to receiver and sender
-                io.to(String(receiverId)).emit('receive_message', newMessage);
-                io.to(String(senderId)).emit('receive_message', newMessage);
+                if (!convDoc) {
+                    console.error('send_message: conversation not found');
+                    return;
+                }
 
+                // Verify sender is participant
+                const isMember = convDoc.participants.some((p) => String(p) === String(senderId));
+                if (!isMember) {
+                    console.error(`send_message: user ${senderId} not a participant in ${targetConversationId}`);
+                    return;
+                }
+
+                // Create message
+                const msgPayload = {
+                    sender: senderId,
+                    conversation: targetConversationId,
+                    content: content.trim(),
+                    read: false,
+                };
+                if (receiverId) {
+                    msgPayload.receiver = receiverId;
+                }
+
+                const createdMessage = await Message.create(msgPayload);
+
+                // Update conversation's last message
+                await Conversation.updateLastMessage(targetConversationId, createdMessage._id);
+
+                const populatedMessage = await Message.findById(createdMessage._id)
+                    .populate('sender', 'name userTag avatar')
+                    .lean();
+
+                // Broadcast to conversation room
+                io.to(String(targetConversationId)).emit('receive_message', populatedMessage);
+
+                // Also emit to all participants' user rooms (so unread counts update in sidebar)
+                convDoc.participants.forEach((participantId) => {
+                    const pidStr = String(participantId);
+                    // Avoid duplicate if socket is already in conversation room
+                    io.to(pidStr).emit('receive_message', populatedMessage);
+                });
             } catch (error) {
-                console.error('Error saving message:', error);
+                console.error('Error saving/sending message in socket:', error);
             }
         });
 
-        // Typing Indicators
+        // 1-on-1 Typing Indicators
         socket.on('typing', (data) => {
             const { receiverId, senderId } = data;
             if (receiverId) {
@@ -97,6 +139,29 @@ const socketHandler = (io) => {
             }
         });
 
+        // Group Typing Indicators
+        socket.on('group_typing', (data) => {
+            const { conversationId, senderId, senderName } = data;
+            if (conversationId) {
+                socket.to(String(conversationId)).emit('group_typing', {
+                    conversationId,
+                    senderId,
+                    senderName,
+                });
+            }
+        });
+
+        socket.on('group_stop_typing', (data) => {
+            const { conversationId, senderId } = data;
+            if (conversationId) {
+                socket.to(String(conversationId)).emit('group_stop_typing', {
+                    conversationId,
+                    senderId,
+                });
+            }
+        });
+
+        // Disconnect
         socket.on('disconnect', async () => {
             const userId = socketToUser.get(socket.id) || socket.userId;
             socketToUser.delete(socket.id);
@@ -114,17 +179,11 @@ const socketHandler = (io) => {
                         } catch (err) {
                             console.error('Error updating lastSeen on disconnect:', err.message);
                         }
-
-                        console.log(`User ${userId} disconnected (0 active sockets left, now offline)`);
-                    } else {
-                        console.log(`User ${userId} closed 1 socket (${sockets.size} active sockets remaining)`);
                     }
                 }
             }
-            console.log('Socket Disconnected', socket.id);
         });
     });
 };
 
 module.exports = socketHandler;
-

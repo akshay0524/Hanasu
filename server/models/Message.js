@@ -11,8 +11,12 @@ const messageSchema = mongoose.Schema(
         receiver: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
-            required: [true, 'Receiver is required'],
-            immutable: true, // A message receiver cannot be changed
+            default: null,
+        },
+        conversation: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Conversation',
+            default: null,
         },
         content: {
             type: String,
@@ -37,6 +41,18 @@ const messageSchema = mongoose.Schema(
             type: Date,
             default: null,
         },
+        readBy: [
+            {
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                },
+                readAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
     },
     {
         timestamps: true, // Provides createdAt and updatedAt
@@ -44,6 +60,10 @@ const messageSchema = mongoose.Schema(
 );
 
 // ─── Indexes ────────────────────────────────────────────────────────────────────
+// Conversation-level message queries
+messageSchema.index({ conversation: 1, createdAt: 1 });
+messageSchema.index({ conversation: 1, createdAt: -1 });
+
 // Primary query: fetch chat history between two users, sorted by time
 // This compound index covers the $or query in chatController
 messageSchema.index({ sender: 1, receiver: 1, createdAt: 1 });
@@ -56,10 +76,13 @@ messageSchema.index({ receiver: 1, read: 1 });
 messageSchema.index({ createdAt: -1 });
 
 // ─── Pre-save middleware ────────────────────────────────────────────────────────
-// Validate sender !== receiver
+// Validate sender !== receiver and at least one destination
 messageSchema.pre('validate', function () {
     if (this.sender && this.receiver && this.sender.toString() === this.receiver.toString()) {
         throw new Error('Sender and receiver cannot be the same user');
+    }
+    if (!this.receiver && !this.conversation) {
+        throw new Error('Message must have either a receiver or a conversation');
     }
 });
 
