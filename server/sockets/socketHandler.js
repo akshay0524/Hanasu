@@ -7,6 +7,8 @@ const ConversationReadState = require('../models/ConversationReadState');
 const userSockets = new Map();
 // Track which user a socket belongs to: socketId -> userId (string)
 const socketToUser = new Map();
+// Track active voice calls: callId -> { callerId, calleeId, status }
+const activeCalls = new Map();
 
 const socketHandler = (io) => {
     io.on('connection', (socket) => {
@@ -225,6 +227,89 @@ const socketHandler = (io) => {
             }
         });
 
+        // ─── VOICE CALL SIGNALING (WebRTC) ───────────────────────────────────────
+        // All signaling is relayed; no audio goes through Socket.IO
+
+        // Caller initiates a call
+        socket.on('call:initiate', (data) => {
+            const { calleeId, callerId, callerName, callerAvatar, callId } = data;
+            if (!calleeId || !callerId || !callId) return;
+
+            activeCalls.set(callId, {
+                callerId: String(callerId),
+                calleeId: String(calleeId),
+                status: 'ringing',
+            });
+
+            // Notify callee
+            io.to(String(calleeId)).emit('call:incoming', {
+                callId,
+                callerId: String(callerId),
+                callerName,
+                callerAvatar,
+            });
+        });
+
+        // Callee accepts
+        socket.on('call:accept', (data) => {
+            const { callId, calleeId } = data;
+            if (!callId) return;
+
+            const call = activeCalls.get(callId);
+            if (call) {
+                call.status = 'connected';
+                // Notify caller that callee accepted
+                io.to(String(call.callerId)).emit('call:accepted', { callId, calleeId });
+            }
+        });
+
+        // Callee rejects
+        socket.on('call:reject', (data) => {
+            const { callId } = data;
+            if (!callId) return;
+
+            const call = activeCalls.get(callId);
+            if (call) {
+                io.to(String(call.callerId)).emit('call:rejected', { callId });
+                activeCalls.delete(callId);
+            }
+        });
+
+        // Either side ends the call
+        socket.on('call:end', (data) => {
+            const { callId } = data;
+            if (!callId) return;
+
+            const call = activeCalls.get(callId);
+            if (call) {
+                // Notify both sides
+                io.to(String(call.callerId)).emit('call:ended', { callId });
+                io.to(String(call.calleeId)).emit('call:ended', { callId });
+                activeCalls.delete(callId);
+            }
+        });
+
+        // WebRTC SDP Offer
+        socket.on('call:offer', (data) => {
+            const { callId, offer, targetId } = data;
+            if (!targetId || !offer) return;
+            io.to(String(targetId)).emit('call:offer', { callId, offer });
+        });
+
+        // WebRTC SDP Answer
+        socket.on('call:answer', (data) => {
+            const { callId, answer, targetId } = data;
+            if (!targetId || !answer) return;
+            io.to(String(targetId)).emit('call:answer', { callId, answer });
+        });
+
+        // ICE Candidate relay
+        socket.on('call:ice-candidate', (data) => {
+            const { callId, candidate, targetId } = data;
+            if (!targetId || !candidate) return;
+            io.to(String(targetId)).emit('call:ice-candidate', { callId, candidate });
+        });
+
         // Disconnect
         socket.on('disconnect', async () => {
             const userId = socketToUser.get(socket.id) || socket.userId;
@@ -242,6 +327,15 @@ const socketHandler = (io) => {
                             await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
                         } catch (err) {
                             console.error('Error updating lastSeen on disconnect:', err.message);
+                        }
+
+                        // End any active calls involving this user
+                        for (const [callId, call] of activeCalls.entries()) {
+                            if (call.callerId === userId || call.calleeId === userId) {
+                                const otherId = call.callerId === userId ? call.calleeId : call.callerId;
+                                io.to(String(otherId)).emit('call:ended', { callId, reason: 'disconnected' });
+                                activeCalls.delete(callId);
+                            }
                         }
                     }
                 }

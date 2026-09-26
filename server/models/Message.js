@@ -20,9 +20,8 @@ const messageSchema = mongoose.Schema(
         },
         content: {
             type: String,
-            required: [true, 'Message content is required'],
+            default: '',
             trim: true,
-            minlength: [1, 'Message cannot be empty'],
             maxlength: [5000, 'Message cannot exceed 5000 characters'],
         },
         messageType: {
@@ -33,6 +32,26 @@ const messageSchema = mongoose.Schema(
             },
             default: 'text',
         },
+        // File/image attachment metadata
+        attachment: {
+            filename: { type: String, default: null },   // original filename
+            storedName: { type: String, default: null }, // UUID-based server name
+            mimeType: { type: String, default: null },
+            size: { type: Number, default: null },       // bytes
+            url: { type: String, default: null },        // served URL path
+        },
+        // Emoji reactions: { emoji: string, users: [userId, ...] }
+        reactions: [
+            {
+                emoji: { type: String, required: true },
+                users: [
+                    {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: 'User',
+                    },
+                ],
+            },
+        ],
         read: {
             type: Boolean,
             default: false,
@@ -65,7 +84,6 @@ messageSchema.index({ conversation: 1, createdAt: 1 });
 messageSchema.index({ conversation: 1, createdAt: -1 });
 
 // Primary query: fetch chat history between two users, sorted by time
-// This compound index covers the $or query in chatController
 messageSchema.index({ sender: 1, receiver: 1, createdAt: 1 });
 messageSchema.index({ receiver: 1, sender: 1, createdAt: 1 });
 
@@ -83,6 +101,10 @@ messageSchema.pre('validate', function () {
     }
     if (!this.receiver && !this.conversation) {
         throw new Error('Message must have either a receiver or a conversation');
+    }
+    // content is required only for text/system; file/image messages may have empty content
+    if (['text', 'system'].includes(this.messageType) && (!this.content || this.content.trim() === '')) {
+        throw new Error('Message content is required for text/system messages');
     }
 });
 

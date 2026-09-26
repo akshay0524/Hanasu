@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -11,6 +12,7 @@ const userRoutes = require('./routes/userRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -37,12 +39,28 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve uploaded files as static assets (no path traversal — basename only)
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(UPLOAD_DIR));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/files', fileRoutes);
+
+// Multer error handler (file size / mime type violations)
+app.use((err, req, res, next) => {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ message: 'File too large. Maximum size is 10MB.' });
+    }
+    if (err.message && err.message.includes('not allowed')) {
+        return res.status(415).json({ message: err.message });
+    }
+    next(err);
+});
 
 // Socket.IO
 const io = new Server(server, {

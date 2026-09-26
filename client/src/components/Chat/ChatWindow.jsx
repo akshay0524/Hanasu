@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     getChatHistory,
     getConversationMessages,
     markConversationAsRead,
     markMessagesAsRead,
 } from '../../services/chatApi';
+import { uploadFile, toggleReaction } from '../../services/fileApi';
 import { getCatchMeUp, getSmartReplies } from '../../services/aiApi';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
@@ -26,11 +27,115 @@ import {
     FiCheckSquare,
     FiMessageSquare,
     FiX,
+    FiSmile,
+    FiPaperclip,
+    FiPhone,
+    FiImage,
+    FiDownload,
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import EmojiPicker from 'emoji-picker-react';
 import GroupInfoModal from './GroupInfoModal';
 import CatchMeUpModal from './CatchMeUpModal';
 import AIMessageActionModal from './AIMessageActionModal';
+import { VoiceCallOverlay, IncomingCallBanner } from './VoiceCall';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const SERVER_BASE = import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace('/api', '')
+    : 'http://localhost:5000';
+
+const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const getFileIcon = (mimeType) => {
+    if (!mimeType) return '📄';
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType === 'application/pdf') return '📕';
+    if (mimeType.includes('word')) return '📝';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📋';
+    if (mimeType.includes('zip') || mimeType.includes('compressed')) return '🗜️';
+    if (mimeType.startsWith('audio/')) return '🎵';
+    if (mimeType === 'text/plain') return '📄';
+    return '📎';
+};
+
+// ─── File Message Bubble ──────────────────────────────────────────────────────
+
+const FileMessageContent = ({ attachment }) => {
+    if (!attachment?.url) return null;
+    const fullUrl = `${SERVER_BASE}${attachment.url}`;
+    const isImage = attachment.mimeType?.startsWith('image/');
+
+    if (isImage) {
+        return (
+            <a href={fullUrl} target="_blank" rel="noreferrer" className="block mt-1">
+                <img
+                    src={fullUrl}
+                    alt={attachment.filename || 'Image'}
+                    className="max-w-[220px] sm:max-w-[280px] rounded-xl object-cover border border-white/10 hover:opacity-90 transition"
+                    loading="lazy"
+                />
+            </a>
+        );
+    }
+
+    return (
+        <a
+            href={fullUrl}
+            target="_blank"
+            rel="noreferrer"
+            download={attachment.filename}
+            className="flex items-center gap-3 mt-1.5 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition group/file"
+        >
+            <span className="text-2xl">{getFileIcon(attachment.mimeType)}</span>
+            <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold truncate">{attachment.filename}</p>
+                <p className="text-[10px] opacity-70">{formatFileSize(attachment.size)}</p>
+            </div>
+            <FiDownload size={14} className="flex-shrink-0 opacity-60 group-hover/file:opacity-100 transition" />
+        </a>
+    );
+};
+
+// ─── Reaction Bar ─────────────────────────────────────────────────────────────
+
+const ReactionBar = ({ reactions, messageId, currentUserId, onToggle }) => {
+    if (!reactions?.length) return null;
+
+    return (
+        <div className="flex flex-wrap gap-1 mt-1.5">
+            {reactions.map((r) => {
+                const count = r.users?.length || 0;
+                if (count === 0) return null;
+                const hasReacted = r.users?.some((u) => String(u._id || u) === String(currentUserId));
+                return (
+                    <button
+                        key={r.emoji}
+                        onClick={() => onToggle(messageId, r.emoji)}
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border transition select-none ${
+                            hasReacted
+                                ? 'bg-[var(--accent-primary)]/20 border-[var(--accent-primary)]/50 text-[var(--text-primary)]'
+                                : 'bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--accent-primary)]/40'
+                        }`}
+                        title={`${r.emoji} ${count}`}
+                    >
+                        <span>{r.emoji}</span>
+                        <span>{count}</span>
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const ChatWindow = ({ chat, onBack }) => {
     const { user } = useAuth();
@@ -63,6 +168,25 @@ const ChatWindow = ({ chat, onBack }) => {
     const [highlightedMessageId, setHighlightedMessageId] = useState(null);
     const [notificationToast, setNotificationToast] = useState('');
 
+    // Emoji picker
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const emojiPickerRef = useRef(null);
+
+    // File upload
+    const fileInputRef = useRef(null);
+    const [uploadProgress, setUploadProgress] = useState(null); // null or 0–100
+
+    // Voice call state
+    const [callState, setCallState] = useState({
+        active: false,
+        type: null,       // 'caller' | 'callee'
+        callId: null,
+        peerId: null,
+        peerName: null,
+        peerAvatar: null,
+    });
+    const [incomingCall, setIncomingCall] = useState(null);
+
     const messagesEndRef = useRef(null);
     const messageElementsRef = useRef({});
 
@@ -75,10 +199,22 @@ const ChatWindow = ({ chat, onBack }) => {
         setActiveGroup(chat);
         setSmartReplies([]);
         setSelectedActionMessage(null);
+        setShowEmojiPicker(false);
     }, [chat]);
 
     useEffect(() => {
         getFriends().then(setFriends).catch(() => {});
+    }, []);
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     // Load Chat History
@@ -191,16 +327,55 @@ const ChatWindow = ({ chat, onBack }) => {
             }
         };
 
+        // Handle real-time reaction updates
+        const handleReactionUpdated = ({ messageId, reactions }) => {
+            setMessages((prev) =>
+                prev.map((m) =>
+                    String(m._id) === String(messageId) ? { ...m, reactions } : m
+                )
+            );
+        };
+
         socket.on('receive_message', handleReceiveMessage);
         socket.on('messages_read', handleMessagesRead);
         socket.on('conversation_read', handleConversationRead);
+        socket.on('reaction_updated', handleReactionUpdated);
 
         return () => {
             socket.off('receive_message', handleReceiveMessage);
             socket.off('messages_read', handleMessagesRead);
             socket.off('conversation_read', handleConversationRead);
+            socket.off('reaction_updated', handleReactionUpdated);
         };
     }, [socket, chat, isGroup, user._id]);
+
+    // Voice call socket events
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleIncomingCall = ({ callId, callerId, callerName, callerAvatar }) => {
+            setIncomingCall({ callId, callerId, callerName, callerAvatar });
+        };
+
+        const handleCallAccepted = ({ callId }) => {
+            setCallState((prev) => ({ ...prev, active: true }));
+        };
+
+        const handleCallRejected = ({ callId }) => {
+            setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
+            showToast('Call was declined');
+        };
+
+        socket.on('call:incoming', handleIncomingCall);
+        socket.on('call:accepted', handleCallAccepted);
+        socket.on('call:rejected', handleCallRejected);
+
+        return () => {
+            socket.off('call:incoming', handleIncomingCall);
+            socket.off('call:accepted', handleCallAccepted);
+            socket.off('call:rejected', handleCallRejected);
+        };
+    }, [socket]);
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -311,9 +486,112 @@ const ChatWindow = ({ chat, onBack }) => {
 
         setInput('');
         setSmartReplies([]);
+        setShowEmojiPicker(false);
     };
 
-    // Catch Me Up trigger
+    // ─── Emoji Picker ──────────────────────────────────────────────────────────
+
+    const handleEmojiSelect = (emojiData) => {
+        setInput((prev) => prev + emojiData.emoji);
+        // Keep focus on input
+    };
+
+    // ─── File Upload ───────────────────────────────────────────────────────────
+
+    const handleFileSelect = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = ''; // reset
+
+        const formData = new FormData();
+        formData.append('file', file);
+        if (isGroup) {
+            formData.append('conversationId', chat._id);
+        } else {
+            formData.append('receiverId', chat._id);
+        }
+
+        try {
+            setUploadProgress(0);
+            await uploadFile(formData, (progress) => setUploadProgress(progress));
+        } catch (err) {
+            showToast(err?.response?.data?.message || 'File upload failed');
+        } finally {
+            setUploadProgress(null);
+        }
+    };
+
+    // ─── Reaction Toggle ───────────────────────────────────────────────────────
+
+    const handleToggleReaction = async (messageId, emoji) => {
+        try {
+            // Optimistic update will come from reaction_updated socket event
+            await toggleReaction(messageId, emoji);
+        } catch (err) {
+            console.error('Reaction error:', err);
+        }
+    };
+
+    // ─── Voice Call ────────────────────────────────────────────────────────────
+
+    const handleStartCall = () => {
+        if (isGroup) {
+            showToast('Voice calls are only available in direct chats');
+            return;
+        }
+        if (!socket) return;
+
+        const callId = `${user._id}-${chat._id}-${Date.now()}`;
+
+        socket.emit('call:initiate', {
+            callId,
+            callerId: user._id,
+            calleeId: chat._id,
+            callerName: user.name,
+            callerAvatar: user.avatar,
+        });
+
+        setCallState({
+            active: true,
+            type: 'caller',
+            callId,
+            peerId: chat._id,
+            peerName: chat.name,
+            peerAvatar: chat.avatar,
+        });
+    };
+
+    const handleAcceptCall = async () => {
+        if (!incomingCall) return;
+
+        socket.emit('call:accept', {
+            callId: incomingCall.callId,
+            calleeId: user._id,
+        });
+
+        setCallState({
+            active: true,
+            type: 'callee',
+            callId: incomingCall.callId,
+            peerId: incomingCall.callerId,
+            peerName: incomingCall.callerName,
+            peerAvatar: incomingCall.callerAvatar,
+        });
+        setIncomingCall(null);
+    };
+
+    const handleRejectCall = () => {
+        if (!incomingCall) return;
+        socket.emit('call:reject', { callId: incomingCall.callId });
+        setIncomingCall(null);
+    };
+
+    const handleCallEnd = () => {
+        setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
+    };
+
+    // ─── AI Features ───────────────────────────────────────────────────────────
+
     const handleTriggerCatchMeUp = async () => {
         setIsCatchMeUpOpen(true);
         setCatchMeUpLoading(true);
@@ -336,7 +614,6 @@ const ChatWindow = ({ chat, onBack }) => {
         }
     };
 
-    // Jump to specific message from Catch Me Up
     const handleJumpToMessage = (targetMsgId) => {
         setHighlightedMessageId(targetMsgId);
         const element = messageElementsRef.current[targetMsgId];
@@ -348,7 +625,6 @@ const ChatWindow = ({ chat, onBack }) => {
         }, 3500);
     };
 
-    // Smart Reply generation for a message
     const handleTriggerSmartReplies = async (msg) => {
         setLoadingReplies(true);
         try {
@@ -405,6 +681,28 @@ const ChatWindow = ({ chat, onBack }) => {
 
     return (
         <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative select-none">
+
+            {/* ─── Voice Call Overlays ─────────────────────────────────────────── */}
+            <AnimatePresence>
+                {callState.active && (
+                    <VoiceCallOverlay
+                        key="call-overlay"
+                        socket={socket}
+                        currentUser={user}
+                        callState={callState}
+                        onCallEnd={handleCallEnd}
+                    />
+                )}
+                {incomingCall && !callState.active && (
+                    <IncomingCallBanner
+                        key="incoming-call"
+                        callInfo={incomingCall}
+                        onAccept={handleAcceptCall}
+                        onReject={handleRejectCall}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-20 p-3.5 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/95 to-transparent border-b border-[var(--border-subtle)]/60 flex items-center justify-between backdrop-blur-md">
                 <div className="flex items-center gap-3">
@@ -463,6 +761,18 @@ const ChatWindow = ({ chat, onBack }) => {
                         <span className="hidden sm:inline">Catch Me Up</span>
                     </button>
 
+                    {/* Voice Call button — direct chats only */}
+                    {!isGroup && (
+                        <button
+                            onClick={handleStartCall}
+                            disabled={callState.active}
+                            className="p-2 rounded-full bg-[var(--bg-panel)] text-emerald-400 hover:bg-emerald-500/10 transition border border-[var(--border-subtle)] shadow-sm disabled:opacity-40"
+                            title="Start voice call"
+                        >
+                            <FiPhone size={15} />
+                        </button>
+                    )}
+
                     {/* Direct chat menu */}
                     {!isGroup && (
                         <div className="relative">
@@ -502,6 +812,7 @@ const ChatWindow = ({ chat, onBack }) => {
                         const isMe = senderId === String(user._id);
                         const isSystem = msg.messageType === 'system';
                         const isHighlighted = highlightedMessageId === String(msg._id);
+                        const hasAttachment = msg.messageType === 'image' || msg.messageType === 'file';
 
                         if (isSystem) {
                             return (
@@ -535,69 +846,87 @@ const ChatWindow = ({ chat, onBack }) => {
                                         />
                                     )}
 
-                                    {/* Bubble */}
-                                    <div
-                                        className={`relative px-4 py-2.5 rounded-2xl text-xs leading-relaxed backdrop-blur-sm transition-all ${
-                                            isHighlighted ? 'ring-2 ring-[var(--accent-primary)] shadow-[0_0_20px_rgba(255,106,0,0.3)]' : ''
-                                        } ${
-                                            isMe
-                                                ? 'bg-[var(--accent-primary)] text-white font-semibold rounded-tr-none shadow-md shadow-[var(--accent-primary)]/20'
-                                                : 'bg-[var(--bg-card)] text-[var(--text-primary)] rounded-tl-none border border-[var(--border-subtle)] shadow-sm'
-                                        }`}
-                                    >
-                                        {/* Sender Name in Group Chat */}
-                                        {isGroup && !isMe && (
-                                            <p className="text-[10px] font-bold text-[var(--text-accent)] mb-0.5 truncate">
-                                                {msg.sender?.name || 'Member'}
-                                            </p>
-                                        )}
-
-                                        <p className="whitespace-pre-wrap select-text">{msg.content}</p>
-
-                                        <div className="flex items-center justify-between gap-3 mt-1 opacity-85">
-                                            <span className="text-[9px] font-mono">
-                                                {new Date(msg.createdAt).toLocaleTimeString([], {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                })}
-                                            </span>
-                                            {isMe && (
-                                                <span
-                                                    className="flex items-center gap-1 text-[9px] font-semibold select-none"
-                                                    title={
-                                                        msg.read
-                                                            ? `Seen ${msg.readAt ? new Date(msg.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`
-                                                            : 'Sent'
-                                                    }
-                                                >
-                                                    {msg.read ? (
-                                                        <span className="text-white font-black flex items-center gap-0.5">
-                                                            <span className="tracking-tighter font-mono text-[10px]">✓✓</span>
-                                                            <span className="text-[8.5px] uppercase tracking-wider">Seen</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-white/75 flex items-center gap-0.5 font-medium">
-                                                            <span className="font-mono text-[10px]">✓</span>
-                                                            <span className="text-[8.5px]">Sent</span>
-                                                        </span>
-                                                    )}
-                                                </span>
+                                    {/* Bubble + Reactions */}
+                                    <div className="flex flex-col">
+                                        <div
+                                            className={`relative px-4 py-2.5 rounded-2xl text-xs leading-relaxed backdrop-blur-sm transition-all ${
+                                                isHighlighted ? 'ring-2 ring-[var(--accent-primary)] shadow-[0_0_20px_rgba(255,106,0,0.3)]' : ''
+                                            } ${
+                                                isMe
+                                                    ? 'bg-[var(--accent-primary)] text-white font-semibold rounded-tr-none shadow-md shadow-[var(--accent-primary)]/20'
+                                                    : 'bg-[var(--bg-card)] text-[var(--text-primary)] rounded-tl-none border border-[var(--border-subtle)] shadow-sm'
+                                            }`}
+                                        >
+                                            {/* Sender Name in Group Chat */}
+                                            {isGroup && !isMe && (
+                                                <p className="text-[10px] font-bold text-[var(--text-accent)] mb-0.5 truncate">
+                                                    {msg.sender?.name || 'Member'}
+                                                </p>
                                             )}
+
+                                            {/* Text content */}
+                                            {msg.content && (
+                                                <p className="whitespace-pre-wrap select-text">{msg.content}</p>
+                                            )}
+
+                                            {/* File / Image attachment */}
+                                            {hasAttachment && (
+                                                <FileMessageContent attachment={msg.attachment} />
+                                            )}
+
+                                            <div className="flex items-center justify-between gap-3 mt-1 opacity-85">
+                                                <span className="text-[9px] font-mono">
+                                                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                    })}
+                                                </span>
+                                                {isMe && (
+                                                    <span
+                                                        className="flex items-center gap-1 text-[9px] font-semibold select-none"
+                                                        title={
+                                                            msg.read
+                                                                ? `Seen ${msg.readAt ? new Date(msg.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`
+                                                                : 'Sent'
+                                                        }
+                                                    >
+                                                        {msg.read ? (
+                                                            <span className="text-white font-black flex items-center gap-0.5">
+                                                                <span className="tracking-tighter font-mono text-[10px]">✓✓</span>
+                                                                <span className="text-[8.5px] uppercase tracking-wider">Seen</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-white/75 flex items-center gap-0.5 font-medium">
+                                                                <span className="font-mono text-[10px]">✓</span>
+                                                                <span className="text-[8.5px]">Sent</span>
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Context Menu Trigger Icon */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedActionMessage(msg);
+                                                }}
+                                                className={`absolute top-1.5 ${
+                                                    isMe ? '-left-7' : '-right-7'
+                                                } p-1 text-[var(--text-muted)] hover:text-[#FFB000] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition rounded-lg hover:bg-white/10`}
+                                                title="Message Actions"
+                                            >
+                                                <FiMoreVertical size={13} />
+                                            </button>
                                         </div>
 
-                                        {/* Context Menu Trigger Icon */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedActionMessage(msg);
-                                            }}
-                                            className={`absolute top-1.5 ${
-                                                isMe ? '-left-7' : '-right-7'
-                                            } p-1 text-[var(--text-muted)] hover:text-[#FFB000] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition rounded-lg hover:bg-white/10`}
-                                            title="Message Actions"
-                                        >
-                                            <FiMoreVertical size={13} />
-                                        </button>
+                                        {/* Reactions row */}
+                                        <ReactionBar
+                                            reactions={msg.reactions}
+                                            messageId={msg._id}
+                                            currentUserId={user._id}
+                                            onToggle={handleToggleReaction}
+                                        />
                                     </div>
                                 </div>
                             </motion.div>
@@ -624,7 +953,17 @@ const ChatWindow = ({ chat, onBack }) => {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Smart Reply Suggestions Bar (Phase 11) */}
+            {/* File Upload Progress Bar */}
+            {uploadProgress !== null && (
+                <div className="mx-4 mb-1 h-1 bg-[var(--bg-panel)] rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-[var(--accent-primary)] transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                    />
+                </div>
+            )}
+
+            {/* Smart Reply Suggestions Bar */}
             {smartReplies.length > 0 && (
                 <div className="px-4 pb-2 flex items-center gap-2 overflow-x-auto custom-scrollbar animate-fade-in">
                     <span className="text-[10px] font-bold text-[var(--text-accent)] flex items-center gap-1 flex-shrink-0">
@@ -652,14 +991,71 @@ const ChatWindow = ({ chat, onBack }) => {
             )}
 
             {/* Message Input Composer */}
-            <div className="p-4 pt-1 bg-transparent">
+            <div className="p-4 pt-1 bg-transparent relative">
+                {/* Emoji Picker */}
+                <AnimatePresence>
+                    {showEmojiPicker && (
+                        <motion.div
+                            ref={emojiPickerRef}
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute bottom-full mb-2 left-4 z-30"
+                        >
+                            <EmojiPicker
+                                onEmojiClick={handleEmojiSelect}
+                                theme="dark"
+                                skinTonesDisabled
+                                height={380}
+                                width={320}
+                                searchDisabled={false}
+                                previewConfig={{ showPreview: false }}
+                                lazyLoadEmojis
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <form
                     onSubmit={handleSend}
                     className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-full px-3 py-2 flex items-center gap-2 shadow-xl backdrop-blur-xl"
                 >
+                    {/* Emoji Toggle */}
+                    <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker((v) => !v)}
+                        className={`p-2 rounded-full transition flex-shrink-0 ${
+                            showEmojiPicker
+                                ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)]'
+                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+                        }`}
+                        title="Emoji"
+                    >
+                        <FiSmile size={18} />
+                    </button>
+
+                    {/* File Attach */}
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadProgress !== null}
+                        className="p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition flex-shrink-0 disabled:opacity-40"
+                        title="Attach file"
+                    >
+                        <FiPaperclip size={18} />
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.mp3,.wav"
+                        onChange={handleFileSelect}
+                    />
+
                     <input
                         type="text"
-                        className="flex-1 bg-transparent text-[var(--text-primary)] font-semibold px-4 py-2 focus:outline-none text-xs md:text-sm placeholder-[var(--text-secondary)]/70"
+                        className="flex-1 bg-transparent text-[var(--text-primary)] font-semibold px-2 py-2 focus:outline-none text-xs md:text-sm placeholder-[var(--text-secondary)]/70"
                         placeholder={
                             isGroup
                                 ? `Message ${activeGroup.name}...`
@@ -667,6 +1063,9 @@ const ChatWindow = ({ chat, onBack }) => {
                         }
                         value={input}
                         onChange={handleInput}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') setShowEmojiPicker(false);
+                        }}
                     />
                     <button
                         type="submit"
@@ -751,8 +1150,27 @@ const ChatWindow = ({ chat, onBack }) => {
                                     </span>
                                 </div>
                                 <p className="text-xs text-[var(--text-primary)] line-clamp-3 italic bg-[var(--bg-card)] p-2.5 rounded-xl border border-[var(--border-subtle)]">
-                                    "{selectedActionMessage.content}"
+                                    "{selectedActionMessage.content || (selectedActionMessage.attachment?.filename || 'File attachment')}"
                                 </p>
+                            </div>
+
+                            {/* Quick Reaction Strip */}
+                            <div className="mb-3">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-1 mb-1.5">Quick Reaction</p>
+                                <div className="flex gap-2 flex-wrap">
+                                    {['👍', '❤️', '😂', '😮', '😢', '🔥', '✅', '👏'].map((em) => (
+                                        <button
+                                            key={em}
+                                            onClick={() => {
+                                                handleToggleReaction(selectedActionMessage._id, em);
+                                                setSelectedActionMessage(null);
+                                            }}
+                                            className="text-xl hover:scale-125 transition-transform"
+                                        >
+                                            {em}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Actions List */}
