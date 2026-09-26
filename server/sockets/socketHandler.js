@@ -265,19 +265,21 @@ const socketHandler = (io) => {
 
         // Callee rejects
         socket.on('call:reject', (data) => {
-            const { callId } = data;
+            const { callId, targetId } = data || {};
             if (!callId) return;
 
             const call = activeCalls.get(callId);
             if (call) {
                 io.to(String(call.callerId)).emit('call:rejected', { callId });
                 activeCalls.delete(callId);
+            } else if (targetId) {
+                io.to(String(targetId)).emit('call:rejected', { callId });
             }
         });
 
         // Either side ends the call
         socket.on('call:end', (data) => {
-            const { callId } = data;
+            const { callId, targetId } = data || {};
             if (!callId) return;
 
             const call = activeCalls.get(callId);
@@ -286,6 +288,8 @@ const socketHandler = (io) => {
                 io.to(String(call.callerId)).emit('call:ended', { callId });
                 io.to(String(call.calleeId)).emit('call:ended', { callId });
                 activeCalls.delete(callId);
+            } else if (targetId) {
+                io.to(String(targetId)).emit('call:ended', { callId });
             }
         });
 

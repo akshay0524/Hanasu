@@ -1,20 +1,142 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Chat/Sidebar';
 import ChatWindow from '../components/Chat/ChatWindow';
 import AIChatWindow from '../components/AIChat/AIChatWindow';
+import { VoiceCallOverlay, IncomingCallBanner } from '../components/Chat/VoiceCall';
+import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ChatHome = () => {
     const [activeChat, setActiveChat] = useState(null);
+    const { user } = useAuth();
+    const { socket } = useSocket();
 
-    // Responsive logic handled by CSS classes (hidden/flex) 
-    // and passing "onBack" handler to windows.
+    // Global voice call states — persists across chats, sidebar, and empty view
+    const [incomingCall, setIncomingCall] = useState(null);
+    const [callState, setCallState] = useState({
+        active: false,
+        type: null, // 'caller' | 'callee'
+        callId: null,
+        peerId: null,
+        peerName: null,
+        peerAvatar: null,
+    });
+
+    // ─── Global Call Socket Listeners ──────────────────────────────────────────
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleIncomingCall = ({ callId, callerId, callerName, callerAvatar }) => {
+            console.log('[VoiceCall] Incoming call received in ChatHome:', callerName, callId);
+            setIncomingCall({ callId, callerId, callerName, callerAvatar });
+        };
+
+        const handleCallRejected = () => {
+            console.log('[VoiceCall] Call rejected');
+            setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
+        };
+
+        const handleCallEnded = () => {
+            console.log('[VoiceCall] Call ended remotely');
+            setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
+            setIncomingCall(null);
+        };
+
+        socket.on('call:incoming', handleIncomingCall);
+        socket.on('call:rejected', handleCallRejected);
+        socket.on('call:ended', handleCallEnded);
+
+        return () => {
+            socket.off('call:incoming', handleIncomingCall);
+            socket.off('call:rejected', handleCallRejected);
+            socket.off('call:ended', handleCallEnded);
+        };
+    }, [socket]);
+
+    // ─── Call Handlers ─────────────────────────────────────────────────────────
+    const handleStartCall = (targetChat) => {
+        if (!socket || !user || !targetChat) return;
+
+        const callId = `${user._id}-${targetChat._id}-${Date.now()}`;
+        console.log('[VoiceCall] Initiating call to:', targetChat.name, callId);
+
+        socket.emit('call:initiate', {
+            callId,
+            callerId: user._id,
+            calleeId: targetChat._id,
+            callerName: user.name,
+            callerAvatar: user.avatar,
+        });
+
+        setCallState({
+            active: true,
+            type: 'caller',
+            callId,
+            peerId: targetChat._id,
+            peerName: targetChat.name,
+            peerAvatar: targetChat.avatar,
+        });
+    };
+
+    const handleAcceptCall = () => {
+        if (!incomingCall || !socket || !user) return;
+
+        console.log('[VoiceCall] Accepting incoming call:', incomingCall.callId);
+        socket.emit('call:accept', {
+            callId: incomingCall.callId,
+            calleeId: user._id,
+        });
+
+        setCallState({
+            active: true,
+            type: 'callee',
+            callId: incomingCall.callId,
+            peerId: incomingCall.callerId,
+            peerName: incomingCall.callerName,
+            peerAvatar: incomingCall.callerAvatar,
+        });
+        setIncomingCall(null);
+    };
+
+    const handleRejectCall = () => {
+        if (!incomingCall || !socket) return;
+        console.log('[VoiceCall] Declining incoming call:', incomingCall.callId);
+        socket.emit('call:reject', {
+            callId: incomingCall.callId,
+            targetId: incomingCall.callerId,
+        });
+        setIncomingCall(null);
+    };
+
+    const handleCallEnd = () => {
+        setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
+    };
 
     return (
         <div className="flex h-dvh w-full overflow-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] relative transition-colors duration-500">
-            {/* Background Texture - Optional, maybe remove for cleaner look or invert opacity based on theme if needed. Keeping simple for now */}
+            {/* ─── Global Call Overlays (Renders anywhere in the app) ─────────── */}
+            <AnimatePresence>
+                {callState.active && (
+                    <VoiceCallOverlay
+                        key="call-overlay"
+                        socket={socket}
+                        currentUser={user}
+                        callState={callState}
+                        onCallEnd={handleCallEnd}
+                    />
+                )}
+                {incomingCall && !callState.active && (
+                    <IncomingCallBanner
+                        key="incoming-call"
+                        callInfo={incomingCall}
+                        onAccept={handleAcceptCall}
+                        onReject={handleRejectCall}
+                    />
+                )}
+            </AnimatePresence>
 
-            {/* Sidebar (Full width on mobile, 400px on Desktop) */}
+            {/* Sidebar (Full width on mobile, 380px on Desktop) */}
             <div className={`
                 ${activeChat ? 'hidden md:flex' : 'flex'} 
                 w-full md:w-[380px] h-full flex-col z-20 
@@ -43,7 +165,12 @@ const ChatHome = () => {
                         activeChat.type === 'ai' ? (
                             <AIChatWindow onBack={() => setActiveChat(null)} />
                         ) : (
-                            <ChatWindow chat={activeChat} onBack={() => setActiveChat(null)} />
+                            <ChatWindow
+                                chat={activeChat}
+                                onBack={() => setActiveChat(null)}
+                                onStartCall={handleStartCall}
+                                isCallActive={callState.active}
+                            />
                         )
                     ) : (
                         // Empty State (Hanasu Zen Identity)
@@ -74,6 +201,5 @@ const ChatHome = () => {
         </div>
     );
 };
-
 
 export default ChatHome;

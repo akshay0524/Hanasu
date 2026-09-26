@@ -38,7 +38,7 @@ import EmojiPicker from 'emoji-picker-react';
 import GroupInfoModal from './GroupInfoModal';
 import CatchMeUpModal from './CatchMeUpModal';
 import AIMessageActionModal from './AIMessageActionModal';
-import { VoiceCallOverlay, IncomingCallBanner } from './VoiceCall';
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -137,7 +137,7 @@ const ReactionBar = ({ reactions, messageId, currentUserId, onToggle }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const ChatWindow = ({ chat, onBack }) => {
+const ChatWindow = ({ chat, onBack, onStartCall, isCallActive }) => {
     const { user } = useAuth();
     const { socket, onlineUsers } = useSocket();
 
@@ -176,16 +176,7 @@ const ChatWindow = ({ chat, onBack }) => {
     const fileInputRef = useRef(null);
     const [uploadProgress, setUploadProgress] = useState(null); // null or 0–100
 
-    // Voice call state
-    const [callState, setCallState] = useState({
-        active: false,
-        type: null,       // 'caller' | 'callee'
-        callId: null,
-        peerId: null,
-        peerName: null,
-        peerAvatar: null,
-    });
-    const [incomingCall, setIncomingCall] = useState(null);
+
 
     const messagesEndRef = useRef(null);
     const messageElementsRef = useRef({});
@@ -349,33 +340,7 @@ const ChatWindow = ({ chat, onBack }) => {
         };
     }, [socket, chat, isGroup, user._id]);
 
-    // Voice call socket events
-    useEffect(() => {
-        if (!socket) return;
 
-        const handleIncomingCall = ({ callId, callerId, callerName, callerAvatar }) => {
-            setIncomingCall({ callId, callerId, callerName, callerAvatar });
-        };
-
-        const handleCallAccepted = ({ callId }) => {
-            setCallState((prev) => ({ ...prev, active: true }));
-        };
-
-        const handleCallRejected = ({ callId }) => {
-            setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
-            showToast('Call was declined');
-        };
-
-        socket.on('call:incoming', handleIncomingCall);
-        socket.on('call:accepted', handleCallAccepted);
-        socket.on('call:rejected', handleCallRejected);
-
-        return () => {
-            socket.off('call:incoming', handleIncomingCall);
-            socket.off('call:accepted', handleCallAccepted);
-            socket.off('call:rejected', handleCallRejected);
-        };
-    }, [socket]);
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -539,55 +504,13 @@ const ChatWindow = ({ chat, onBack }) => {
             showToast('Voice calls are only available in direct chats');
             return;
         }
-        if (!socket) return;
-
-        const callId = `${user._id}-${chat._id}-${Date.now()}`;
-
-        socket.emit('call:initiate', {
-            callId,
-            callerId: user._id,
-            calleeId: chat._id,
-            callerName: user.name,
-            callerAvatar: user.avatar,
-        });
-
-        setCallState({
-            active: true,
-            type: 'caller',
-            callId,
-            peerId: chat._id,
-            peerName: chat.name,
-            peerAvatar: chat.avatar,
-        });
-    };
-
-    const handleAcceptCall = async () => {
-        if (!incomingCall) return;
-
-        socket.emit('call:accept', {
-            callId: incomingCall.callId,
-            calleeId: user._id,
-        });
-
-        setCallState({
-            active: true,
-            type: 'callee',
-            callId: incomingCall.callId,
-            peerId: incomingCall.callerId,
-            peerName: incomingCall.callerName,
-            peerAvatar: incomingCall.callerAvatar,
-        });
-        setIncomingCall(null);
-    };
-
-    const handleRejectCall = () => {
-        if (!incomingCall) return;
-        socket.emit('call:reject', { callId: incomingCall.callId });
-        setIncomingCall(null);
-    };
-
-    const handleCallEnd = () => {
-        setCallState({ active: false, type: null, callId: null, peerId: null, peerName: null, peerAvatar: null });
+        if (isCallActive) {
+            showToast('You are already in a call');
+            return;
+        }
+        if (onStartCall) {
+            onStartCall(chat);
+        }
     };
 
     // ─── AI Features ───────────────────────────────────────────────────────────
@@ -682,26 +605,7 @@ const ChatWindow = ({ chat, onBack }) => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative select-none">
 
-            {/* ─── Voice Call Overlays ─────────────────────────────────────────── */}
-            <AnimatePresence>
-                {callState.active && (
-                    <VoiceCallOverlay
-                        key="call-overlay"
-                        socket={socket}
-                        currentUser={user}
-                        callState={callState}
-                        onCallEnd={handleCallEnd}
-                    />
-                )}
-                {incomingCall && !callState.active && (
-                    <IncomingCallBanner
-                        key="incoming-call"
-                        callInfo={incomingCall}
-                        onAccept={handleAcceptCall}
-                        onReject={handleRejectCall}
-                    />
-                )}
-            </AnimatePresence>
+
 
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-20 p-3.5 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/95 to-transparent border-b border-[var(--border-subtle)]/60 flex items-center justify-between backdrop-blur-md">
@@ -765,7 +669,7 @@ const ChatWindow = ({ chat, onBack }) => {
                     {!isGroup && (
                         <button
                             onClick={handleStartCall}
-                            disabled={callState.active}
+                            disabled={isCallActive}
                             className="p-2 rounded-full bg-[var(--bg-panel)] text-emerald-400 hover:bg-emerald-500/10 transition border border-[var(--border-subtle)] shadow-sm disabled:opacity-40"
                             title="Start voice call"
                         >
