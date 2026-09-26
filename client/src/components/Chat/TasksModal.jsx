@@ -45,17 +45,17 @@ const TasksModal = ({ isOpen, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#15120E] border border-[#FFB000]/30 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl shadow-black/80 flex flex-col max-h-[85vh]">
-                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[#191510]">
+            <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-card)]">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-white font-bold">
                             <FiCheckSquare size={16} />
                         </div>
-                        <h3 className="text-sm font-bold text-[#FFF7EA]">Action Items & Tasks</h3>
+                        <h3 className="text-sm font-bold text-[var(--text-primary)]">Action Items & Tasks</h3>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition"
                     >
                         <FiX size={18} />
                     </button>
@@ -76,8 +76,8 @@ const TasksModal = ({ isOpen, onClose }) => {
                                     key={t._id}
                                     className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 group transition ${
                                         isCompleted
-                                            ? 'bg-[#15120E]/50 border-[var(--border-subtle)] opacity-60'
-                                            : 'bg-[#191510] border-[#FF6A00]/20'
+                                            ? 'bg-[var(--bg-card)]/40 border-[var(--border-subtle)] opacity-60'
+                                            : 'bg-[var(--bg-card)] border-[var(--border-subtle)] shadow-sm'
                                     }`}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
@@ -85,15 +85,15 @@ const TasksModal = ({ isOpen, onClose }) => {
                                             onClick={() => handleToggleStatus(t)}
                                             className={`w-5 h-5 rounded-lg border flex items-center justify-center transition flex-shrink-0 ${
                                                 isCompleted
-                                                    ? 'bg-emerald-500 border-emerald-500 text-black'
-                                                    : 'border-[#FFB000]/50 hover:border-[#FF6A00]'
+                                                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                                                    : 'border-[var(--border-strong)] hover:border-[var(--accent-primary)]'
                                             }`}
                                         >
                                             {isCompleted && <FiCheck size={12} className="stroke-[3]" />}
                                         </button>
                                         <div className="min-w-0">
                                             <p
-                                                className={`text-xs font-semibold text-[#FFF7EA] truncate ${
+                                                className={`text-xs font-semibold text-[var(--text-primary)] truncate ${
                                                     isCompleted ? 'line-through text-[var(--text-muted)]' : ''
                                                 }`}
                                             >

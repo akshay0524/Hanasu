@@ -52,19 +52,19 @@ const ChatHome = () => {
                             <div className="absolute w-96 h-96 rounded-full bg-gradient-to-tr from-[#FF6A00]/10 via-[#FFB000]/5 to-transparent blur-3xl pointer-events-none" />
 
                             {/* Minimal Ring with Kanji */}
-                            <div className="w-28 h-28 rounded-full border border-[#FFB000]/30 flex items-center justify-center mb-6 relative shadow-[0_0_35px_rgba(255,106,0,0.15)] bg-[#12100D]/60 backdrop-blur-md">
-                                <span className="text-4xl text-[#FFB000] font-japanese font-medium tracking-widest">話す</span>
+                            <div className="w-28 h-28 rounded-full border border-[var(--border-strong)] flex items-center justify-center mb-6 relative shadow-[0_0_35px_rgba(255,106,0,0.15)] bg-[var(--bg-card)] backdrop-blur-md">
+                                <span className="text-4xl text-[var(--text-accent)] font-japanese font-medium tracking-widest">話す</span>
                                 <div className="absolute -inset-1 border border-[#FF6A00]/20 rounded-full animate-ping opacity-20 pointer-events-none" style={{ animationDuration: '4s' }}></div>
                             </div>
 
-                            <h2 className="text-2xl font-display font-bold tracking-[0.22em] text-[#FFF7EA] mb-1">HANASU</h2>
-                            <p className="text-[11px] uppercase tracking-[0.25em] text-[#FFB000]/90 font-medium mb-3">Talk freely · Stay connected</p>
-                            <p className="max-w-xs text-sm text-[var(--text-muted)] font-light leading-relaxed">
+                            <h2 className="text-2xl font-display font-bold tracking-[0.22em] text-[var(--text-primary)] mb-1">HANASU</h2>
+                            <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--text-accent)] font-medium mb-3">Talk freely · Stay connected</p>
+                            <p className="max-w-xs text-sm text-[var(--text-muted)] font-medium leading-relaxed">
                                 Select a conversation to begin.
                             </p>
 
-                            <div className="mt-8 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--border-subtle)] bg-[#191510]/60 text-[11px] font-mono text-[var(--text-muted)]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#FF6A00] shadow-[0_0_6px_#FF6A00]"></span>
+                            <div className="mt-8 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--bg-card)] text-[11px] font-mono text-[var(--text-muted)] shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shadow-[0_0_6px_#FF6A00]"></span>
                                 <span>Real-time presence</span>
                             </div>
                         </div>

@@ -292,8 +292,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                            <span className="font-display font-bold tracking-[0.14em] text-xs text-[#FFF7EA]">HANASU</span>
-                            <span className="text-[10px] text-[#FFB000] font-japanese font-semibold">話す</span>
+                            <span className="font-display font-bold tracking-[0.14em] text-xs text-[var(--text-primary)]">HANASU</span>
+                            <span className="text-[10px] text-[var(--text-accent)] font-japanese font-semibold">話す</span>
                         </div>
                         <h3 className="font-semibold text-xs text-[var(--text-primary)] tracking-wide truncate max-w-[130px]">
                             {user.name}
@@ -351,7 +351,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                             if (socket) socket.emit('get_online_users');
                         }}
                         className={`relative pb-2.5 text-xs font-semibold tracking-wider uppercase transition-colors ${
-                            tab === t ? 'text-[#FFF7EA]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                            tab === t ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                         }`}
                     >
                         {t === 'chats' && 'Chats'}
@@ -378,8 +378,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                     onClick={() => onSelectChat({ type: 'ai', id: 'ai', name: 'Hanasu Assistant' })}
                     className={`p-3 rounded-xl flex items-center gap-3 cursor-pointer transition-all border ${
                         activeChat?.type === 'ai'
-                            ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.12)]'
-                            : 'bg-[#12100D]/60 border-[var(--border-subtle)] hover:bg-[#191510]/80 hover:border-[#FFB000]/25'
+                            ? 'bg-[var(--bg-active)] border-[var(--border-strong)] shadow-[0_0_16px_rgba(255,106,0,0.12)]'
+                            : 'bg-[var(--bg-card)] border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]'
                     }`}
                 >
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold shadow-[0_0_12px_rgba(255,106,0,0.3)]">
@@ -404,30 +404,30 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                             <div className="flex items-center gap-1.5">
                                 <button
                                     onClick={() => setChatSubFilter('all')}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                                    className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${
                                         chatSubFilter === 'all'
-                                            ? 'bg-white/10 text-[#FFF7EA]'
-                                            : 'text-[var(--text-muted)] hover:text-white'
+                                            ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
                                     }`}
                                 >
                                     All
                                 </button>
                                 <button
                                     onClick={() => setChatSubFilter('direct')}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                                    className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${
                                         chatSubFilter === 'direct'
-                                            ? 'bg-white/10 text-[#FFF7EA]'
-                                            : 'text-[var(--text-muted)] hover:text-white'
+                                            ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
                                     }`}
                                 >
                                     Direct
                                 </button>
                                 <button
                                     onClick={() => setChatSubFilter('groups')}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                                    className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${
                                         chatSubFilter === 'groups'
-                                            ? 'bg-white/10 text-[#FFF7EA]'
-                                            : 'text-[var(--text-muted)] hover:text-white'
+                                            ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
                                     }`}
                                 >
                                     Groups ({groups.length})
@@ -437,7 +437,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                             {/* Create Group Button */}
                             <button
                                 onClick={() => setIsCreateGroupOpen(true)}
-                                className="px-2.5 py-1 rounded-lg bg-[#FF6A00]/15 border border-[#FF6A00]/40 text-[#FF6A00] hover:bg-[#FF6A00]/25 text-[10px] font-bold flex items-center gap-1 transition"
+                                className="px-2.5 py-1 rounded-lg bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/40 text-[var(--text-accent)] hover:bg-[var(--accent-primary)]/25 text-[10px] font-bold flex items-center gap-1 transition"
                             >
                                 <FiPlus size={11} /> New Group
                             </button>
@@ -469,8 +469,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                             }}
                                             className={`p-2.5 rounded-xl flex items-center gap-3 cursor-pointer transition-all border relative ${
                                                 isSelected
-                                                    ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.1)]'
-                                                    : 'bg-[#12100D]/40 border-[var(--border-subtle)] hover:bg-[#191510]/70 hover:border-[#FFB000]/20'
+                                                    ? 'bg-[var(--bg-active)] border-[var(--border-strong)] shadow-[0_0_16px_rgba(255,106,0,0.1)]'
+                                                    : 'bg-[var(--bg-card)] border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]'
                                             }`}
                                         >
                                             <div className="relative flex-shrink-0">
@@ -542,8 +542,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                                 }}
                                                 className={`p-2.5 rounded-xl flex items-center gap-3 cursor-pointer transition-all border relative ${
                                                     isSelected
-                                                        ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.1)]'
-                                                        : 'bg-[#12100D]/40 border-[var(--border-subtle)] hover:bg-[#191510]/70 hover:border-[#FFB000]/20'
+                                                        ? 'bg-[var(--bg-active)] border-[var(--border-strong)] shadow-[0_0_16px_rgba(255,106,0,0.1)]'
+                                                        : 'bg-[var(--bg-card)] border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]'
                                                 }`}
                                             >
                                                 <div className="relative flex-shrink-0">
@@ -566,8 +566,8 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                                             {friend.name}
                                                         </h4>
                                                         <span
-                                                            className={`text-[9px] font-medium ${
-                                                                isOnline ? 'text-[#FFB000]' : 'text-[var(--text-muted)]'
+                                                            className={`text-[9px] font-semibold ${
+                                                                isOnline ? 'text-[var(--text-accent)]' : 'text-[var(--text-muted)]'
                                                             }`}
                                                         >
                                                             {isOnline ? '● Online' : 'Offline'}
@@ -578,7 +578,7 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                                     </p>
                                                 </div>
                                                 {friendUnread > 0 && (
-                                                    <div className="w-5 h-5 bg-[#FF6A00] text-[#090705] rounded-full flex items-center justify-center text-[10px] font-bold shadow-[0_0_10px_rgba(255,106,0,0.4)] flex-shrink-0">
+                                                    <div className="w-5 h-5 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-[0_0_10px_rgba(255,106,0,0.4)] flex-shrink-0">
                                                         {friendUnread}
                                                     </div>
                                                 )}

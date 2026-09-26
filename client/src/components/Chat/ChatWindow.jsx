@@ -406,7 +406,7 @@ const ChatWindow = ({ chat, onBack }) => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--bg-primary)] relative select-none">
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 z-20 p-3.5 bg-gradient-to-b from-[#12100D] via-[#12100D]/95 to-transparent border-b border-[var(--border-subtle)]/60 flex items-center justify-between backdrop-blur-md">
+            <div className="absolute top-0 left-0 right-0 z-20 p-3.5 bg-gradient-to-b from-[var(--bg-primary)] via-[var(--bg-primary)]/95 to-transparent border-b border-[var(--border-subtle)]/60 flex items-center justify-between backdrop-blur-md">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
@@ -421,7 +421,7 @@ const ChatWindow = ({ chat, onBack }) => {
                             isGroup ? 'cursor-pointer hover:border-[#FFB000]/40 transition' : ''
                         }`}
                     >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold text-xs flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                             {activeGroup.avatar ? (
                                 <img
                                     src={activeGroup.avatar}
@@ -456,7 +456,7 @@ const ChatWindow = ({ chat, onBack }) => {
                     {/* ✨ Catch Me Up Button */}
                     <button
                         onClick={handleTriggerCatchMeUp}
-                        className="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FF6A00]/20 to-[#FFB000]/20 border border-[#FFB000]/50 text-[#FFB000] hover:bg-[#FF6A00]/30 text-xs font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(255,106,0,0.15)] transition"
+                        className="px-3 py-1.5 rounded-full bg-[var(--bg-panel)] border border-[var(--border-strong)] text-[var(--text-accent)] hover:bg-[var(--bg-hover)] text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
                         title="Get instant summary of missed messages"
                     >
                         <span className="text-sm">✨</span>
@@ -506,7 +506,7 @@ const ChatWindow = ({ chat, onBack }) => {
                         if (isSystem) {
                             return (
                                 <div key={msg._id || index} className="flex justify-center my-2">
-                                    <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-[#1C1813] text-[#FFB000]/80 border border-[#FFB000]/20 font-mono shadow-sm">
+                                    <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-[var(--bg-panel)] text-[var(--text-accent)] border border-[var(--border-subtle)] font-mono shadow-sm">
                                         ✦ {msg.content}
                                     </span>
                                 </div>
@@ -538,16 +538,16 @@ const ChatWindow = ({ chat, onBack }) => {
                                     {/* Bubble */}
                                     <div
                                         className={`relative px-4 py-2.5 rounded-2xl text-xs leading-relaxed backdrop-blur-sm transition-all ${
-                                            isHighlighted ? 'ring-2 ring-[#FF6A00] shadow-[0_0_20px_#FF6A00]' : ''
+                                            isHighlighted ? 'ring-2 ring-[var(--accent-primary)] shadow-[0_0_20px_rgba(255,106,0,0.3)]' : ''
                                         } ${
                                             isMe
-                                                ? 'bg-[#FF6A00] text-[#090705] font-semibold rounded-tr-none shadow-md shadow-[#FF6A00]/20'
-                                                : 'bg-[#181410] text-[#FFF7EA] rounded-tl-none border border-[var(--border-subtle)] shadow-sm'
+                                                ? 'bg-[var(--accent-primary)] text-white font-semibold rounded-tr-none shadow-md shadow-[var(--accent-primary)]/20'
+                                                : 'bg-[var(--bg-card)] text-[var(--text-primary)] rounded-tl-none border border-[var(--border-subtle)] shadow-sm'
                                         }`}
                                     >
                                         {/* Sender Name in Group Chat */}
                                         {isGroup && !isMe && (
-                                            <p className="text-[10px] font-bold text-[#FFB000] mb-0.5 truncate">
+                                            <p className="text-[10px] font-bold text-[var(--text-accent)] mb-0.5 truncate">
                                                 {msg.sender?.name || 'Member'}
                                             </p>
                                         )}
@@ -571,12 +571,12 @@ const ChatWindow = ({ chat, onBack }) => {
                                                     }
                                                 >
                                                     {msg.read ? (
-                                                        <span className="text-[#090705] font-black flex items-center gap-0.5">
+                                                        <span className="text-white font-black flex items-center gap-0.5">
                                                             <span className="tracking-tighter font-mono text-[10px]">✓✓</span>
                                                             <span className="text-[8.5px] uppercase tracking-wider">Seen</span>
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[#090705]/65 flex items-center gap-0.5 font-medium">
+                                                        <span className="text-white/75 flex items-center gap-0.5 font-medium">
                                                             <span className="font-mono text-[10px]">✓</span>
                                                             <span className="text-[8.5px]">Sent</span>
                                                         </span>
@@ -608,7 +608,7 @@ const ChatWindow = ({ chat, onBack }) => {
                 {/* Typing indicator */}
                 {typingUsers.size > 0 && (
                     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start px-2">
-                        <div className="bg-[#181410] px-3.5 py-1.5 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex items-center gap-2">
+                        <div className="bg-[var(--bg-card)] px-3.5 py-1.5 rounded-2xl rounded-tl-none border border-[var(--border-subtle)] flex items-center gap-2 shadow-sm">
                             <span className="text-[10px] text-[var(--text-muted)] font-mono">
                                 {Array.from(typingUsers).join(', ')} is typing...
                             </span>
@@ -627,7 +627,7 @@ const ChatWindow = ({ chat, onBack }) => {
             {/* Smart Reply Suggestions Bar (Phase 11) */}
             {smartReplies.length > 0 && (
                 <div className="px-4 pb-2 flex items-center gap-2 overflow-x-auto custom-scrollbar animate-fade-in">
-                    <span className="text-[10px] font-bold text-[#FFB000] flex items-center gap-1 flex-shrink-0">
+                    <span className="text-[10px] font-bold text-[var(--text-accent)] flex items-center gap-1 flex-shrink-0">
                         <FiZap size={11} /> Suggestions:
                     </span>
                     {smartReplies.map((reply, i) => (
@@ -637,14 +637,14 @@ const ChatWindow = ({ chat, onBack }) => {
                             onClick={() => {
                                 setInput(reply);
                             }}
-                            className="px-3 py-1.5 rounded-full bg-[#1C1813] border border-[#FFB000]/40 text-xs text-[#FFF7EA] hover:bg-[#FF6A00]/20 hover:border-[#FF6A00] transition flex-shrink-0 font-medium"
+                            className="px-3 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--border-strong)] text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] hover:border-[var(--accent-primary)] transition flex-shrink-0 font-medium shadow-sm"
                         >
                             {reply}
                         </button>
                     ))}
                     <button
                         onClick={() => setSmartReplies([])}
-                        className="text-[10px] text-[var(--text-muted)] hover:text-white ml-auto"
+                        className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] ml-auto"
                     >
                         Dismiss
                     </button>
@@ -670,7 +670,7 @@ const ChatWindow = ({ chat, onBack }) => {
                     />
                     <button
                         type="submit"
-                        className="w-10 h-10 bg-[#FF6A00] rounded-full text-[#090705] flex items-center justify-center hover:bg-[#E05D00] transition shadow-lg shadow-[rgba(255,106,0,0.3)] font-bold flex-shrink-0"
+                        className="w-10 h-10 bg-[var(--accent-primary)] rounded-full text-white flex items-center justify-center hover:bg-[var(--accent-hover)] transition shadow-lg shadow-[rgba(255,106,0,0.3)] font-bold flex-shrink-0"
                     >
                         <FiSend className="ml-0.5" />
                     </button>
@@ -730,15 +730,15 @@ const ChatWindow = ({ chat, onBack }) => {
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-                            className="relative z-10 w-full sm:max-w-md bg-[#191510] border-t sm:border border-[#FFB000]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 overflow-hidden max-h-[90vh] flex flex-col"
+                            className="relative z-10 w-full sm:max-w-md bg-[var(--bg-panel)] border-t sm:border border-[var(--border-strong)] rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 overflow-hidden max-h-[90vh] flex flex-col"
                         >
                             {/* Mobile Drag Indicator */}
-                            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 sm:hidden" />
+                            <div className="w-12 h-1.5 bg-[var(--border-strong)] rounded-full mx-auto mb-3 sm:hidden" />
 
                             {/* Header: Quoted Message Preview */}
                             <div className="mb-4 pb-3 border-b border-[var(--border-subtle)]">
                                 <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] mb-1">
-                                    <span className="font-semibold text-[#FFB000]">
+                                    <span className="font-semibold text-[var(--text-accent)]">
                                         {String(selectedActionMessage.sender?._id || selectedActionMessage.sender) === String(user._id)
                                             ? 'You'
                                             : selectedActionMessage.sender?.name || 'Member'}
@@ -750,30 +750,30 @@ const ChatWindow = ({ chat, onBack }) => {
                                         })}
                                     </span>
                                 </div>
-                                <p className="text-xs text-[#FFF7EA] line-clamp-3 italic bg-black/30 p-2.5 rounded-xl border border-white/5">
+                                <p className="text-xs text-[var(--text-primary)] line-clamp-3 italic bg-[var(--bg-card)] p-2.5 rounded-xl border border-[var(--border-subtle)]">
                                     "{selectedActionMessage.content}"
                                 </p>
                             </div>
 
                             {/* Actions List */}
-                            <div className="space-y-1.5 overflow-y-auto pr-1">
+                            <div className="space-y-1.5 overflow-y-auto pr-1 custom-scrollbar">
                                 {/* Standard Actions */}
                                 <div className="grid grid-cols-2 gap-2 mb-2">
                                     <button
                                         onClick={() => handleCopyMessage(selectedActionMessage.content)}
-                                        className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#FFF7EA] border border-white/5 transition"
+                                        className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-semibold text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiCopy size={14} className="text-[#FF6A00]" /> Copy Text
+                                        <FiCopy size={14} className="text-[var(--text-accent)]" /> Copy Text
                                     </button>
                                     <button
                                         onClick={() => handleQuoteReply(selectedActionMessage)}
-                                        className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#FFF7EA] border border-white/5 transition"
+                                        className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-semibold text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiCornerUpLeft size={14} className="text-[#FFB000]" /> Quote & Reply
+                                        <FiCornerUpLeft size={14} className="text-[var(--text-accent)]" /> Quote & Reply
                                     </button>
                                 </div>
 
-                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#FFB000] px-1 pt-1 pb-0.5 flex items-center gap-1">
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-accent)] px-1 pt-1 pb-0.5 flex items-center gap-1">
                                     <FiZap size={11} /> AI Intelligence Actions
                                 </div>
 
@@ -788,11 +788,11 @@ const ChatWindow = ({ chat, onBack }) => {
                                             });
                                             setSelectedActionMessage(null);
                                         }}
-                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-[#FF6A00]/10 to-transparent hover:from-[#FF6A00]/20 text-xs font-medium text-[#FFF7EA] border border-[#FF6A00]/25 transition"
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-medium text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiFileText size={14} className="text-[#FF6A00] flex-shrink-0" />
+                                        <FiFileText size={14} className="text-[var(--text-accent)] flex-shrink-0" />
                                         <div className="text-left">
-                                            <div className="font-semibold text-xs text-[#FFF7EA]">Summarize</div>
+                                            <div className="font-semibold text-xs text-[var(--text-primary)]">Summarize</div>
                                             <div className="text-[10px] text-[var(--text-muted)]">Key points</div>
                                         </div>
                                     </button>
@@ -806,11 +806,11 @@ const ChatWindow = ({ chat, onBack }) => {
                                             });
                                             setSelectedActionMessage(null);
                                         }}
-                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-[#FFB000]/10 to-transparent hover:from-[#FFB000]/20 text-xs font-medium text-[#FFF7EA] border border-[#FFB000]/25 transition"
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-medium text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiHelpCircle size={14} className="text-[#FFB000] flex-shrink-0" />
+                                        <FiHelpCircle size={14} className="text-[var(--text-accent)] flex-shrink-0" />
                                         <div className="text-left">
-                                            <div className="font-semibold text-xs text-[#FFF7EA]">Explain</div>
+                                            <div className="font-semibold text-xs text-[var(--text-primary)]">Explain</div>
                                             <div className="text-[10px] text-[var(--text-muted)]">Clarify meaning</div>
                                         </div>
                                     </button>
@@ -824,11 +824,11 @@ const ChatWindow = ({ chat, onBack }) => {
                                             });
                                             setSelectedActionMessage(null);
                                         }}
-                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-transparent hover:from-amber-500/20 text-xs font-medium text-[#FFF7EA] border border-amber-500/25 transition"
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-medium text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiGlobe size={14} className="text-amber-400 flex-shrink-0" />
+                                        <FiGlobe size={14} className="text-[var(--text-accent)] flex-shrink-0" />
                                         <div className="text-left">
-                                            <div className="font-semibold text-xs text-[#FFF7EA]">Translate</div>
+                                            <div className="font-semibold text-xs text-[var(--text-primary)]">Translate</div>
                                             <div className="text-[10px] text-[var(--text-muted)]">Into any language</div>
                                         </div>
                                     </button>
@@ -838,11 +838,11 @@ const ChatWindow = ({ chat, onBack }) => {
                                             handleTriggerSmartReplies(selectedActionMessage);
                                             setSelectedActionMessage(null);
                                         }}
-                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-transparent hover:from-emerald-500/20 text-xs font-medium text-[#FFF7EA] border border-emerald-500/25 transition"
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-medium text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiMessageSquare size={14} className="text-emerald-400 flex-shrink-0" />
+                                        <FiMessageSquare size={14} className="text-emerald-500 flex-shrink-0" />
                                         <div className="text-left">
-                                            <div className="font-semibold text-xs text-[#FFF7EA]">Smart Reply</div>
+                                            <div className="font-semibold text-xs text-[var(--text-primary)]">Smart Reply</div>
                                             <div className="text-[10px] text-[var(--text-muted)]">Suggest replies</div>
                                         </div>
                                     </button>
@@ -856,11 +856,11 @@ const ChatWindow = ({ chat, onBack }) => {
                                             });
                                             setSelectedActionMessage(null);
                                         }}
-                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-sky-500/10 to-transparent hover:from-sky-500/20 text-xs font-medium text-[#FFF7EA] border border-sky-500/25 transition"
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-medium text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiBookOpen size={14} className="text-sky-400 flex-shrink-0" />
+                                        <FiBookOpen size={14} className="text-sky-500 flex-shrink-0" />
                                         <div className="text-left">
-                                            <div className="font-semibold text-xs text-[#FFF7EA]">Remember Fact</div>
+                                            <div className="font-semibold text-xs text-[var(--text-primary)]">Remember Fact</div>
                                             <div className="text-[10px] text-[var(--text-muted)]">Save memory</div>
                                         </div>
                                     </button>
@@ -874,11 +874,11 @@ const ChatWindow = ({ chat, onBack }) => {
                                             });
                                             setSelectedActionMessage(null);
                                         }}
-                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-purple-500/10 to-transparent hover:from-purple-500/20 text-xs font-medium text-[#FFF7EA] border border-purple-500/25 transition"
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-medium text-[var(--text-primary)] border border-[var(--border-subtle)] transition"
                                     >
-                                        <FiCheckSquare size={14} className="text-purple-400 flex-shrink-0" />
+                                        <FiCheckSquare size={14} className="text-purple-500 flex-shrink-0" />
                                         <div className="text-left">
-                                            <div className="font-semibold text-xs text-[#FFF7EA]">Extract Task</div>
+                                            <div className="font-semibold text-xs text-[var(--text-primary)]">Extract Task</div>
                                             <div className="text-[10px] text-[var(--text-muted)]">Add action item</div>
                                         </div>
                                     </button>
@@ -888,7 +888,7 @@ const ChatWindow = ({ chat, onBack }) => {
                             {/* Close Button */}
                             <button
                                 onClick={() => setSelectedActionMessage(null)}
-                                className="mt-4 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[var(--text-muted)] hover:text-white transition flex items-center justify-center gap-1.5"
+                                className="mt-4 w-full py-2.5 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)] transition flex items-center justify-center gap-1.5"
                             >
                                 <FiX size={14} /> Close
                             </button>

@@ -184,18 +184,18 @@ const AIMessageActionModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#15120E] border border-[#FFB000]/30 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl shadow-black/80 flex flex-col max-h-[85vh]">
+            <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
                 {/* Header */}
-                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[#191510]">
+                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-card)]">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-white font-bold">
                             {actionInfo.icon}
                         </div>
-                        <h3 className="text-sm font-bold text-[#FFF7EA]">{actionInfo.label}</h3>
+                        <h3 className="text-sm font-bold text-[var(--text-primary)]">{actionInfo.label}</h3>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition"
                     >
                         <FiX size={18} />
                     </button>
@@ -204,11 +204,11 @@ const AIMessageActionModal = ({
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
                     {/* Source Message Preview */}
-                    <div className="p-3 rounded-xl bg-[#191510]/60 border border-[var(--border-subtle)]">
+                    <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm">
                         <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">
                             Original Message
                         </div>
-                        <p className="text-xs text-[#FFF7EA]/85 italic line-clamp-3">
+                        <p className="text-xs text-[var(--text-primary)] italic line-clamp-3">
                             "{message?.content}"
                         </p>
                     </div>
@@ -228,11 +228,11 @@ const AIMessageActionModal = ({
                         <>
                             {/* Summarize view */}
                             {actionType === 'summarize' && resultData && (
-                                <div className="p-4 rounded-xl bg-[#1E1913] border border-[#FFB000]/25 space-y-2">
-                                    <h4 className="text-xs font-bold text-[#FFB000] uppercase tracking-wider">
+                                <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-2 shadow-sm">
+                                    <h4 className="text-xs font-bold text-[var(--text-accent)] uppercase tracking-wider">
                                         Summary
                                     </h4>
-                                    <p className="text-xs text-[#FFF7EA] leading-relaxed">
+                                    <p className="text-xs text-[var(--text-primary)] leading-relaxed">
                                         {resultData.summary}
                                     </p>
                                 </div>
@@ -240,11 +240,11 @@ const AIMessageActionModal = ({
 
                             {/* Explain view */}
                             {actionType === 'explain' && resultData && (
-                                <div className="p-4 rounded-xl bg-[#1E1913] border border-[#FFB000]/25 space-y-2">
-                                    <h4 className="text-xs font-bold text-[#FFB000] uppercase tracking-wider">
+                                <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-2 shadow-sm">
+                                    <h4 className="text-xs font-bold text-[var(--text-accent)] uppercase tracking-wider">
                                         Explanation & Context
                                     </h4>
-                                    <p className="text-xs text-[#FFF7EA] leading-relaxed">
+                                    <p className="text-xs text-[var(--text-primary)] leading-relaxed">
                                         {resultData.explanation}
                                     </p>
                                 </div>
@@ -260,7 +260,7 @@ const AIMessageActionModal = ({
                                         <select
                                             value={targetLang}
                                             onChange={(e) => setTargetLang(e.target.value)}
-                                            className="bg-[#1C1813] border border-[var(--border-subtle)] text-xs text-[#FFB000] font-semibold rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#FFB000]"
+                                            className="bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] font-semibold rounded-lg px-2.5 py-1 focus:outline-none focus:border-[var(--accent-primary)]"
                                         >
                                             {LANGUAGES.map((lang) => (
                                                 <option key={lang} value={lang}>
@@ -271,11 +271,11 @@ const AIMessageActionModal = ({
                                     </div>
 
                                     {resultData && (
-                                        <div className="p-4 rounded-xl bg-[#1E1913] border border-[#FFB000]/25 space-y-2">
+                                        <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-2 shadow-sm">
                                             <div className="flex justify-between items-center text-[10px] text-[var(--text-muted)]">
                                                 <span>Language: {targetLang}</span>
                                             </div>
-                                            <p className="text-xs text-[#FFF7EA] leading-relaxed font-medium">
+                                            <p className="text-xs text-[var(--text-primary)] leading-relaxed font-medium">
                                                 {resultData.translatedText}
                                             </p>
                                         </div>
@@ -302,7 +302,7 @@ const AIMessageActionModal = ({
                                                     content: e.target.value,
                                                 }))
                                             }
-                                            className="w-full bg-[#1C1813] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-xl p-3 focus:outline-none focus:border-[#FFB000]"
+                                            className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-xl p-3 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                         />
                                     </div>
                                     <div>
@@ -317,7 +317,7 @@ const AIMessageActionModal = ({
                                                     category: e.target.value,
                                                 }))
                                             }
-                                            className="w-full bg-[#1C1813] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#FFB000]"
+                                            className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                         >
                                             <option value="general">General Note</option>
                                             <option value="project">Project / Work</option>
@@ -346,7 +346,7 @@ const AIMessageActionModal = ({
                                             onChange={(e) =>
                                                 setEditableTask((prev) => ({ ...prev, title: e.target.value }))
                                             }
-                                            className="w-full bg-[#1C1813] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#FFB000]"
+                                            className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                             required
                                         />
                                     </div>
@@ -365,7 +365,7 @@ const AIMessageActionModal = ({
                                                     }))
                                                 }
                                                 placeholder="e.g. Akshay"
-                                                className="w-full bg-[#1C1813] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#FFB000]"
+                                                className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                             />
                                         </div>
                                         <div>
@@ -382,7 +382,7 @@ const AIMessageActionModal = ({
                                                     }))
                                                 }
                                                 placeholder="e.g. Friday 5 PM"
-                                                className="w-full bg-[#1C1813] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#FFB000]"
+                                                className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                             />
                                         </div>
                                     </div>
@@ -398,7 +398,7 @@ const AIMessageActionModal = ({
                                                     priority: e.target.value,
                                                 }))
                                             }
-                                            className="w-full bg-[#1C1813] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[#FFB000]"
+                                            className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                         >
                                             <option value="low">Low Priority</option>
                                             <option value="medium">Medium Priority</option>
@@ -413,10 +413,10 @@ const AIMessageActionModal = ({
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-[var(--border-subtle)] flex justify-end gap-2 bg-[#191510]">
+                <div className="p-4 border-t border-[var(--border-subtle)] flex justify-end gap-2 bg-[var(--bg-card)]">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-xs font-semibold text-[var(--text-muted)] hover:text-white transition"
+                        className="px-4 py-2 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition"
                     >
                         {saved ? 'Close' : 'Cancel'}
                     </button>
@@ -427,8 +427,8 @@ const AIMessageActionModal = ({
                             disabled={loading || saved || !editableMemory.content.trim()}
                             className={`px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
                                 saved
-                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                    : 'bg-gradient-to-r from-[#FF6A00] to-[#FFB000] text-[#090705] hover:opacity-95 shadow-md shadow-[#FF6A00]/20'
+                                    ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                                    : 'bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-hover)] shadow-md shadow-[var(--accent-primary)]/20'
                             }`}
                         >
                             {saved ? (
@@ -447,8 +447,8 @@ const AIMessageActionModal = ({
                             disabled={loading || saved || !editableTask.title.trim()}
                             className={`px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
                                 saved
-                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                    : 'bg-gradient-to-r from-[#FF6A00] to-[#FFB000] text-[#090705] hover:opacity-95 shadow-md shadow-[#FF6A00]/20'
+                                    ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                                    : 'bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-hover)] shadow-md shadow-[var(--accent-primary)]/20'
                             }`}
                         >
                             {saved ? (

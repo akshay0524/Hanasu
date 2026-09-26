@@ -35,17 +35,17 @@ const MemoriesModal = ({ isOpen, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#15120E] border border-[#FFB000]/30 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl shadow-black/80 flex flex-col max-h-[85vh]">
-                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[#191510]">
+            <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-card)]">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-white font-bold">
                             <FiBookOpen size={16} />
                         </div>
-                        <h3 className="text-sm font-bold text-[#FFF7EA]">Saved Memories</h3>
+                        <h3 className="text-sm font-bold text-[var(--text-primary)]">Saved Memories</h3>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition"
                     >
                         <FiX size={18} />
                     </button>
@@ -62,13 +62,13 @@ const MemoriesModal = ({ isOpen, onClose }) => {
                         memories.map((m) => (
                             <div
                                 key={m._id}
-                                className="p-3.5 rounded-xl bg-[#191510] border border-[var(--border-subtle)] flex items-start justify-between gap-3 group"
+                                className="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-start justify-between gap-3 group shadow-sm"
                             >
                                 <div className="space-y-1">
-                                    <span className="text-[9px] uppercase tracking-wider font-bold text-[#FFB000] bg-[#FFB000]/10 px-2 py-0.5 rounded border border-[#FFB000]/20">
+                                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--text-accent)] bg-[var(--accent-primary)]/10 px-2 py-0.5 rounded border border-[var(--accent-primary)]/20">
                                         {m.category || 'General'}
                                     </span>
-                                    <p className="text-xs text-[#FFF7EA] leading-relaxed pt-1">{m.content}</p>
+                                    <p className="text-xs text-[var(--text-primary)] leading-relaxed pt-1">{m.content}</p>
                                     <p className="text-[10px] text-[var(--text-muted)] font-mono">
                                         {new Date(m.createdAt).toLocaleDateString()}
                                     </p>

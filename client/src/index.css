@@ -43,24 +43,31 @@
 
   /* DAWN THEME (Crisp High-Contrast Warm Light Mode) */
   [data-theme='dawn'] {
+    --hanasu-bg: #FAF6F0;
+    --hanasu-surface: #FFFFFF;
+    --hanasu-surface-2: #F2ECE1;
+    --hanasu-text: #191510;
+    --hanasu-text-muted: #5C4E3F;
+    --hanasu-border: rgba(180, 140, 90, 0.24);
+
     --bg-primary: #FAF6F0;       /* Warm Alabaster */
     --bg-secondary: #F0EAE1;     /* Soft Linen */
-    --bg-panel: #FFFFFF;
-    --bg-card: #F5EFE6;
-    --bg-active: #EADECF;
-    --bg-hover: #F0EAE1;
+    --bg-panel: #FFFFFF;         /* Crisp White Card/Panel */
+    --bg-card: #F2ECE1;          /* Warm Alabaster Card */
+    --bg-active: #E6D8C4;        /* Selected Active Pill/Card */
+    --bg-hover: #ECE3D4;         /* Hover state */
 
-    --text-primary: #191510;     /* Deep Warm Espresso */
-    --text-secondary: #4A3E31;   /* Warm Umber */
-    --text-muted: #7E6F5E;       /* Sand Muted */
-    --text-accent: #D95A00;      /* Deep Orange Accent */
+    --text-primary: #191510;     /* Deep Warm Espresso (highest contrast) */
+    --text-secondary: #3D3227;   /* Deep Warm Umber */
+    --text-muted: #5C4E3F;       /* Sharp readable muted */
+    --text-accent: #C74E00;      /* Deep High-Contrast Orange Accent */
 
-    --accent-primary: #D95A00;   /* Deep Orange */
-    --accent-hover: #B54700;
-    --accent-glow: rgba(217, 90, 0, 0.2);
+    --accent-primary: #C74E00;   /* High-Contrast Orange */
+    --accent-hover: #A63F00;
+    --accent-glow: rgba(199, 78, 0, 0.25);
 
-    --border-subtle: rgba(180, 140, 90, 0.22);
-    --border-strong: rgba(180, 140, 90, 0.38);
+    --border-subtle: rgba(180, 140, 90, 0.28);
+    --border-strong: rgba(180, 140, 90, 0.45);
   }
 
   body {
@@ -96,7 +103,7 @@
   }
 
   [data-theme='dawn'] ::placeholder {
-    color: #7E6F5E !important;
+    color: #5C4E3F !important;
     opacity: 1;
     font-weight: 500;
   }

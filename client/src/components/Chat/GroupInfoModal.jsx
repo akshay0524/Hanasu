@@ -138,13 +138,13 @@ const GroupInfoModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#15120E] border border-[#FFB000]/25 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl shadow-black/80 flex flex-col max-h-[90vh]">
+            <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[#191510]">
-                    <h3 className="text-sm font-bold text-[#FFF7EA]">Group Information</h3>
+                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-card)]">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">Group Information</h3>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition"
                     >
                         <FiX size={18} />
                     </button>
@@ -159,8 +159,8 @@ const GroupInfoModal = ({
 
                     {/* Group Profile Summary */}
                     {isEditing ? (
-                        <form onSubmit={handleSaveEdit} className="p-4 rounded-xl bg-[#1C1813] border border-[#FFB000]/30 space-y-3">
-                            <h4 className="text-xs font-bold text-[#FFB000]">Edit Group Details</h4>
+                        <form onSubmit={handleSaveEdit} className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-strong)] space-y-3">
+                            <h4 className="text-xs font-bold text-[var(--text-accent)]">Edit Group Details</h4>
                             <div>
                                 <label className="text-[11px] font-semibold text-[var(--text-muted)]">Group Name</label>
                                 <input
@@ -168,7 +168,7 @@ const GroupInfoModal = ({
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
                                     maxLength={100}
-                                    className="w-full bg-[#15120E] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-[#FFB000]"
+                                    className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-[var(--accent-primary)]"
                                     required
                                 />
                             </div>
@@ -178,29 +178,29 @@ const GroupInfoModal = ({
                                     type="url"
                                     value={editAvatar}
                                     onChange={(e) => setEditAvatar(e.target.value)}
-                                    className="w-full bg-[#15120E] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-[#FFB000]"
+                                    className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-2 mt-1 focus:outline-none focus:border-[var(--accent-primary)]"
                                 />
                             </div>
                             <div className="flex gap-2 justify-end pt-2">
                                 <button
                                     type="button"
                                     onClick={() => setIsEditing(false)}
-                                    className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-white"
+                                    className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="px-4 py-1.5 bg-[#FF6A00] text-[#090705] text-xs font-bold rounded-lg shadow hover:bg-[#E05D00]"
+                                    className="px-4 py-1.5 bg-[var(--accent-primary)] text-white text-xs font-bold rounded-lg shadow hover:bg-[var(--accent-hover)]"
                                 >
                                     Save Changes
                                 </button>
                             </div>
                         </form>
                     ) : (
-                        <div className="flex items-center gap-4 p-4 rounded-xl bg-[#191510] border border-[var(--border-subtle)]">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] text-xl font-bold font-display shadow-lg shadow-[#FF6A00]/20 flex-shrink-0">
+                        <div className="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-white text-xl font-bold font-display shadow-lg shadow-[#FF6A00]/20 flex-shrink-0">
                                 {group.avatar ? (
                                     <img src={group.avatar} alt="Avatar" className="w-full h-full object-cover rounded-2xl" />
                                 ) : (
@@ -209,11 +209,11 @@ const GroupInfoModal = ({
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
-                                    <h2 className="text-base font-bold text-[#FFF7EA] truncate">{group.name}</h2>
+                                    <h2 className="text-base font-bold text-[var(--text-primary)] truncate">{group.name}</h2>
                                     {isAdmin && (
                                         <button
                                             onClick={handleStartEdit}
-                                            className="p-1.5 text-[var(--text-muted)] hover:text-[#FFB000] rounded-lg transition"
+                                            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-accent)] rounded-lg transition"
                                             title="Edit Name/Avatar"
                                         >
                                             <FiEdit2 size={14} />
@@ -229,12 +229,12 @@ const GroupInfoModal = ({
 
                     {/* Add Member Drawer */}
                     {isAddingMember ? (
-                        <div className="p-4 rounded-xl bg-[#1C1813] border border-[#FFB000]/30 space-y-3">
+                        <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-strong)] space-y-3">
                             <div className="flex justify-between items-center">
-                                <h4 className="text-xs font-bold text-[#FFB000]">Add Friends to Group</h4>
+                                <h4 className="text-xs font-bold text-[var(--text-accent)]">Add Friends to Group</h4>
                                 <button
                                     onClick={() => setIsAddingMember(false)}
-                                    className="text-xs text-[var(--text-muted)] hover:text-white"
+                                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                                 >
                                     Cancel
                                 </button>
@@ -247,7 +247,7 @@ const GroupInfoModal = ({
                                     value={searchAddQuery}
                                     onChange={(e) => setSearchAddQuery(e.target.value)}
                                     placeholder="Search available friends..."
-                                    className="w-full bg-[#15120E] border border-[var(--border-subtle)] text-[#FFF7EA] text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-[#FFB000]"
+                                    className="w-full bg-[var(--bg-panel)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-[var(--accent-primary)] font-medium"
                                 />
                             </div>
 
@@ -271,13 +271,13 @@ const GroupInfoModal = ({
                                                     });
                                                 }}
                                                 className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border text-xs ${
-                                                    isChecked ? 'bg-[#FF6A00]/20 border-[#FFB000]' : 'border-[var(--border-subtle)] bg-[#15120E]'
+                                                    isChecked ? 'bg-[var(--bg-active)] border-[var(--accent-primary)]' : 'border-[var(--border-subtle)] bg-[var(--bg-panel)]'
                                                 }`}
                                             >
-                                                <span className="font-semibold text-[#FFF7EA]">{friend.name}</span>
+                                                <span className="font-semibold text-[var(--text-primary)]">{friend.name}</span>
                                                 <div
                                                     className={`w-4 h-4 rounded-full flex items-center justify-center border ${
-                                                        isChecked ? 'bg-[#FF6A00] border-[#FF6A00] text-black' : 'border-neutral-600'
+                                                        isChecked ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white' : 'border-[var(--border-strong)]'
                                                     }`}
                                                 >
                                                     {isChecked && <FiCheck size={10} />}
@@ -291,7 +291,7 @@ const GroupInfoModal = ({
                             <button
                                 onClick={handleAddMembersSubmit}
                                 disabled={loading || selectedToAdd.size === 0}
-                                className="w-full py-2 bg-[#FF6A00] text-[#090705] font-bold text-xs rounded-lg hover:bg-[#E05D00] transition disabled:opacity-40"
+                                className="w-full py-2 bg-[var(--accent-primary)] text-white font-bold text-xs rounded-lg hover:bg-[var(--accent-hover)] transition disabled:opacity-40"
                             >
                                 {loading ? 'Adding...' : `Add Selected (${selectedToAdd.size})`}
                             </button>
@@ -300,7 +300,7 @@ const GroupInfoModal = ({
                         isAdmin && availableFriends.length > 0 && (
                             <button
                                 onClick={() => setIsAddingMember(true)}
-                                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[#FFB000]/40 text-[#FFB000] text-xs font-semibold flex items-center justify-center gap-2 hover:bg-[#FFB000]/10 transition"
+                                className="w-full py-2.5 px-4 rounded-xl border border-dashed border-[var(--border-strong)] text-[var(--text-accent)] text-xs font-semibold flex items-center justify-center gap-2 hover:bg-[var(--bg-hover)] transition"
                             >
                                 <FiUserPlus size={15} /> Add Members
                             </button>
@@ -327,7 +327,7 @@ const GroupInfoModal = ({
                                 return (
                                     <div
                                         key={memberId}
-                                        className="p-3 rounded-xl bg-[#191510]/60 border border-[var(--border-subtle)] flex items-center justify-between"
+                                        className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-between shadow-sm"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="relative flex-shrink-0">
@@ -337,14 +337,14 @@ const GroupInfoModal = ({
                                                     className="w-9 h-9 rounded-full object-cover border border-[var(--border-subtle)]"
                                                 />
                                                 <div
-                                                    className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#191510] ${
+                                                    className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[var(--bg-panel)] ${
                                                         isUserOnline ? 'bg-[#FF6A00]' : 'bg-[#7E6F5E]'
                                                     }`}
                                                 />
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-semibold text-[#FFF7EA] truncate">
+                                                    <span className="text-xs font-semibold text-[var(--text-primary)] truncate">
                                                         {member.name} {memberId === currentUserId && '(You)'}
                                                     </span>
                                                     {isMemberCreator && (
@@ -368,10 +368,10 @@ const GroupInfoModal = ({
                                                 {/* Promote / Demote */}
                                                 <button
                                                     onClick={() => handleAdminToggle(memberId, isMemberAdmin ? 'admin' : 'member')}
-                                                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[#FFB000] hover:bg-white/5 transition"
+                                                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-accent)] hover:bg-[var(--bg-hover)] transition"
                                                     title={isMemberAdmin ? 'Demote to Member' : 'Promote to Admin'}
                                                 >
-                                                    <FiShield size={14} className={isMemberAdmin ? 'text-[#FF6A00]' : ''} />
+                                                    <FiShield size={14} className={isMemberAdmin ? 'text-[var(--text-accent)]' : ''} />
                                                 </button>
                                                 {/* Remove */}
                                                 <button

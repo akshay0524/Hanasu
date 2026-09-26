@@ -40,16 +40,16 @@ const CatchMeUpModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-            <div className="bg-[#14110D] border border-[#FFB000]/30 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl shadow-black/90 flex flex-col max-h-[90vh]">
+            <div className="bg-[var(--bg-panel)] border border-[var(--border-strong)] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-gradient-to-r from-[#191510] via-[#1F1912] to-[#191510]">
+                <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-card)]">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-[#090705] font-bold shadow-[0_0_15px_rgba(255,106,0,0.3)]">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF6A00] to-[#FFB000] flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(255,106,0,0.3)]">
                             <span className="text-base font-japanese">話</span>
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-bold text-[#FFF7EA] tracking-wide">
+                                <h3 className="text-sm font-bold text-[var(--text-primary)] tracking-wide">
                                     ✨ Catch Me Up
                                 </h3>
                                 {data?.unreadCount > 0 && (
@@ -65,7 +65,7 @@ const CatchMeUpModal = ({
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-white hover:bg-white/10 transition"
+                        className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition"
                     >
                         <FiX size={18} />
                     </button>
@@ -82,7 +82,7 @@ const CatchMeUpModal = ({
                                 </div>
                             </div>
                             <div className="text-center">
-                                <p className="text-sm font-semibold text-[#FFF7EA]">Analyzing discussion...</p>
+                                <p className="text-sm font-semibold text-[var(--text-primary)]">Analyzing discussion...</p>
                                 <p className="text-xs text-[var(--text-muted)] mt-1">Synthesizing key topics, decisions, and action items</p>
                             </div>
                         </div>
@@ -93,12 +93,12 @@ const CatchMeUpModal = ({
                     ) : (
                         <>
                             {/* Summary Card */}
-                            <div className="p-4 rounded-xl bg-gradient-to-br from-[#1E1913] to-[#16120D] border border-[#FFB000]/25 shadow-sm relative overflow-hidden">
+                            <div className="p-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm relative overflow-hidden">
                                 <div className="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-[#FF6A00]/10 blur-2xl pointer-events-none"></div>
-                                <h4 className="text-xs font-bold text-[#FFB000] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                <h4 className="text-xs font-bold text-[var(--text-accent)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                                     <FiList /> Executive Summary
                                 </h4>
-                                <p className="text-xs text-[#FFF7EA] leading-relaxed font-normal">
+                                <p className="text-xs text-[var(--text-primary)] leading-relaxed font-normal">
                                     {data.summary}
                                 </p>
                             </div>
@@ -106,16 +106,16 @@ const CatchMeUpModal = ({
                             {/* Key Points */}
                             {data.keyPoints?.length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-[#FFF7EA] flex items-center gap-1.5">
+                                    <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                                         <span>📌</span> Key Points
                                     </h4>
                                     <div className="grid gap-2">
                                         {data.keyPoints.map((point, i) => (
                                             <div
                                                 key={i}
-                                                className="p-3 rounded-xl bg-[#191510]/70 border border-[var(--border-subtle)] text-xs text-[#FFF7EA]/90 flex items-start gap-2.5"
+                                                className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] flex items-start gap-2.5 shadow-sm"
                                             >
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[#FFB000] mt-1.5 flex-shrink-0"></span>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] mt-1.5 flex-shrink-0"></span>
                                                 <span className="leading-relaxed">{point}</span>
                                             </div>
                                         ))}
@@ -126,7 +126,7 @@ const CatchMeUpModal = ({
                             {/* Action Items */}
                             {data.actionItems?.length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-[#FF6A00] flex items-center gap-1.5">
+                                    <h4 className="text-xs font-bold text-[var(--text-accent)] flex items-center gap-1.5">
                                         <FiZap /> Action Items ({data.actionItems.length})
                                     </h4>
                                     <div className="grid gap-2">
@@ -135,10 +135,10 @@ const CatchMeUpModal = ({
                                             return (
                                                 <div
                                                     key={idx}
-                                                    className="p-3 rounded-xl bg-[#191510] border border-[#FF6A00]/20 flex items-center justify-between gap-3"
+                                                    className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 shadow-sm"
                                                 >
                                                     <div className="min-w-0">
-                                                        <p className="text-xs font-semibold text-[#FFF7EA] truncate">
+                                                        <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
                                                             {item.task}
                                                         </p>
                                                         <div className="flex items-center gap-2 mt-1 text-[10px] text-[var(--text-muted)] font-mono">
@@ -151,8 +151,8 @@ const CatchMeUpModal = ({
                                                         disabled={isSaved}
                                                         className={`px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition ${
                                                             isSaved
-                                                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                                                : 'bg-[#FF6A00]/20 text-[#FF6A00] border border-[#FF6A00]/40 hover:bg-[#FF6A00]/30'
+                                                                ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                                                                : 'bg-[var(--accent-primary)]/15 text-[var(--text-accent)] border border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/25'
                                                         }`}
                                                     >
                                                         {isSaved ? (
@@ -175,16 +175,16 @@ const CatchMeUpModal = ({
                             {/* Decisions Made */}
                             {data.decisions?.length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <h4 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                                         <span>🎯</span> Decisions Made
                                     </h4>
                                     <div className="grid gap-2">
                                         {data.decisions.map((decision, i) => (
                                             <div
                                                 key={i}
-                                                className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-2.5"
+                                                className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5"
                                             >
-                                                <FiCheck className="text-emerald-400 mt-0.5 flex-shrink-0" size={13} />
+                                                <FiCheck className="text-emerald-500 mt-0.5 flex-shrink-0" size={13} />
                                                 <span>{decision}</span>
                                             </div>
                                         ))}
@@ -195,16 +195,16 @@ const CatchMeUpModal = ({
                             {/* Unresolved Questions */}
                             {data.unresolvedQuestions?.length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-[#FFD166] flex items-center gap-1.5">
+                                    <h4 className="text-xs font-bold text-amber-700 dark:text-[#FFD166] flex items-center gap-1.5">
                                         <FiHelpCircle /> Open Questions
                                     </h4>
                                     <div className="grid gap-2">
                                         {data.unresolvedQuestions.map((q, i) => (
                                             <div
                                                 key={i}
-                                                className="p-3 rounded-xl bg-[#191510] border border-[#FFD166]/20 text-xs text-[#FFF7EA]/80 flex items-start gap-2.5"
+                                                className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] flex items-start gap-2.5 shadow-sm"
                                             >
-                                                <span className="text-[#FFD166] font-bold">?</span>
+                                                <span className="text-amber-600 dark:text-[#FFD166] font-bold">?</span>
                                                 <span>{q}</span>
                                             </div>
                                         ))}
@@ -215,18 +215,18 @@ const CatchMeUpModal = ({
                             {/* Important Highlighted Messages with Jump-to-message */}
                             {data.importantMessages?.length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-[#FFF7EA] flex items-center gap-1.5">
-                                        <FiBookmark className="text-[#FF6A00]" /> Notable Messages
+                                    <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                                        <FiBookmark className="text-[var(--text-accent)]" /> Notable Messages
                                     </h4>
                                     <div className="grid gap-2">
                                         {data.importantMessages.map((msg, i) => (
                                             <div
                                                 key={i}
-                                                className="p-3 rounded-xl bg-[#191510]/80 border border-[var(--border-subtle)] flex items-center justify-between gap-3"
+                                                className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 shadow-sm"
                                             >
                                                 <div className="min-w-0">
                                                     <div className="flex items-center gap-2 mb-0.5">
-                                                        <span className="text-xs font-semibold text-[#FFF7EA]">
+                                                        <span className="text-xs font-semibold text-[var(--text-primary)]">
                                                             {msg.sender}
                                                         </span>
                                                         <span className="text-[10px] text-[var(--text-muted)] font-mono">
@@ -243,7 +243,7 @@ const CatchMeUpModal = ({
                                                             onJumpToMessage(msg.messageId);
                                                             onClose();
                                                         }}
-                                                        className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-white/5 text-[var(--text-muted)] hover:text-[#FFB000] hover:border-[#FFB000]/40 text-[10px] font-semibold flex items-center gap-1 flex-shrink-0 transition"
+                                                        className="px-2.5 py-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-panel)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)] text-[10px] font-semibold flex items-center gap-1 flex-shrink-0 transition"
                                                     >
                                                         <FiExternalLink size={11} /> Jump
                                                     </button>
@@ -258,10 +258,10 @@ const CatchMeUpModal = ({
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-[var(--border-subtle)] flex justify-end bg-[#191510]">
+                <div className="p-4 border-t border-[var(--border-subtle)] flex justify-end bg-[var(--bg-card)]">
                     <button
                         onClick={onClose}
-                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#FF6A00] to-[#FFB000] text-[#090705] text-xs font-bold hover:opacity-95 transition shadow-md shadow-[#FF6A00]/20"
+                        className="px-5 py-2 rounded-xl bg-[var(--accent-primary)] text-white text-xs font-bold hover:bg-[var(--accent-hover)] transition shadow-md shadow-[var(--accent-primary)]/20"
                     >
                         Got it
                     </button>
