@@ -25,6 +25,7 @@ import {
     FiBookOpen,
     FiCheckSquare,
     FiMessageSquare,
+    FiX,
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupInfoModal from './GroupInfoModal';
@@ -57,8 +58,8 @@ const ChatWindow = ({ chat, onBack }) => {
     const [smartReplies, setSmartReplies] = useState([]);
     const [loadingReplies, setLoadingReplies] = useState(false);
 
-    // Context menu / dropdown for a message
-    const [activeMenuMessageId, setActiveMenuMessageId] = useState(null);
+    // Context menu / action sheet for a message
+    const [selectedActionMessage, setSelectedActionMessage] = useState(null);
     const [highlightedMessageId, setHighlightedMessageId] = useState(null);
     const [notificationToast, setNotificationToast] = useState('');
 
@@ -73,7 +74,7 @@ const ChatWindow = ({ chat, onBack }) => {
     useEffect(() => {
         setActiveGroup(chat);
         setSmartReplies([]);
-        setActiveMenuMessageId(null);
+        setSelectedActionMessage(null);
     }, [chat]);
 
     useEffect(() => {
@@ -365,20 +366,20 @@ const ChatWindow = ({ chat, onBack }) => {
             setSmartReplies(['Got it!', 'Sounds good.', 'Let me check on that.']);
         } finally {
             setLoadingReplies(false);
-            setActiveMenuMessageId(null);
+            setSelectedActionMessage(null);
         }
     };
 
     const handleCopyMessage = (text) => {
         navigator.clipboard.writeText(text);
         showToast('Copied to clipboard');
-        setActiveMenuMessageId(null);
+        setSelectedActionMessage(null);
     };
 
     const handleQuoteReply = (msg) => {
         const senderName = msg.sender?.name || 'User';
         setInput(`> ${senderName}: "${msg.content}"\n`);
-        setActiveMenuMessageId(null);
+        setSelectedActionMessage(null);
     };
 
     const showToast = (text) => {
@@ -584,134 +585,19 @@ const ChatWindow = ({ chat, onBack }) => {
                                             )}
                                         </div>
 
-                                        {/* Context Menu Trigger Icon (Hover or tap) */}
+                                        {/* Context Menu Trigger Icon */}
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setActiveMenuMessageId(
-                                                    activeMenuMessageId === msg._id ? null : msg._id
-                                                );
+                                                setSelectedActionMessage(msg);
                                             }}
                                             className={`absolute top-1.5 ${
                                                 isMe ? '-left-7' : '-right-7'
-                                            } p-1 text-[var(--text-muted)] hover:text-[#FFB000] opacity-0 group-hover:opacity-100 transition rounded-lg hover:bg-white/10`}
+                                            } p-1 text-[var(--text-muted)] hover:text-[#FFB000] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition rounded-lg hover:bg-white/10`}
                                             title="Message Actions"
                                         >
                                             <FiMoreVertical size={13} />
                                         </button>
-
-                                        {/* Unified AI Action Menu Dropdown (Phase 14) */}
-                                        {activeMenuMessageId === msg._id && (
-                                            <div
-                                                className={`absolute z-30 top-6 ${
-                                                    isMe ? 'right-0' : 'left-0'
-                                                } bg-[#191510] border border-[#FFB000]/30 rounded-xl shadow-2xl py-1.5 w-44 backdrop-blur-xl animate-fade-in`}
-                                            >
-                                                {/* Copy */}
-                                                <button
-                                                    onClick={() => handleCopyMessage(msg.content)}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiCopy size={12} className="text-[var(--text-muted)]" /> Copy text
-                                                </button>
-
-                                                {/* Reply */}
-                                                <button
-                                                    onClick={() => handleQuoteReply(msg)}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiCornerUpLeft size={12} className="text-[var(--text-muted)]" /> Quote & Reply
-                                                </button>
-
-                                                <div className="h-[1px] bg-[var(--border-subtle)] my-1"></div>
-                                                <div className="px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-[#FFB000]">
-                                                    ✨ AI Actions
-                                                </div>
-
-                                                {/* Summarize */}
-                                                <button
-                                                    onClick={() => {
-                                                        setAiActionModal({
-                                                            isOpen: true,
-                                                            actionType: 'summarize',
-                                                            message: msg,
-                                                        });
-                                                        setActiveMenuMessageId(null);
-                                                    }}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiFileText size={12} className="text-[#FF6A00]" /> Summarize
-                                                </button>
-
-                                                {/* Explain */}
-                                                <button
-                                                    onClick={() => {
-                                                        setAiActionModal({
-                                                            isOpen: true,
-                                                            actionType: 'explain',
-                                                            message: msg,
-                                                        });
-                                                        setActiveMenuMessageId(null);
-                                                    }}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiHelpCircle size={12} className="text-[#FFB000]" /> Explain
-                                                </button>
-
-                                                {/* Translate */}
-                                                <button
-                                                    onClick={() => {
-                                                        setAiActionModal({
-                                                            isOpen: true,
-                                                            actionType: 'translate',
-                                                            message: msg,
-                                                        });
-                                                        setActiveMenuMessageId(null);
-                                                    }}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiGlobe size={12} className="text-[#FFD166]" /> Translate
-                                                </button>
-
-                                                {/* Smart Reply */}
-                                                <button
-                                                    onClick={() => handleTriggerSmartReplies(msg)}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiMessageSquare size={12} className="text-emerald-400" /> Smart Reply
-                                                </button>
-
-                                                {/* Remember */}
-                                                <button
-                                                    onClick={() => {
-                                                        setAiActionModal({
-                                                            isOpen: true,
-                                                            actionType: 'remember',
-                                                            message: msg,
-                                                        });
-                                                        setActiveMenuMessageId(null);
-                                                    }}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiBookOpen size={12} className="text-sky-400" /> Remember fact
-                                                </button>
-
-                                                {/* Task */}
-                                                <button
-                                                    onClick={() => {
-                                                        setAiActionModal({
-                                                            isOpen: true,
-                                                            actionType: 'task',
-                                                            message: msg,
-                                                        });
-                                                        setActiveMenuMessageId(null);
-                                                    }}
-                                                    className="w-full text-left px-3 py-1.5 text-xs text-[#FFF7EA] hover:bg-white/5 flex items-center gap-2"
-                                                >
-                                                    <FiCheckSquare size={12} className="text-purple-400" /> Extract Task
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -824,6 +710,192 @@ const ChatWindow = ({ chat, onBack }) => {
                 conversationId={conversationId}
                 onSuccessNotification={showToast}
             />
+
+            {/* Message Action Sheet / Context Menu Modal */}
+            <AnimatePresence>
+                {selectedActionMessage && (
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedActionMessage(null)}
+                            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+                        />
+
+                        {/* Bottom sheet on mobile / modal on desktop */}
+                        <motion.div
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+                            className="relative z-10 w-full sm:max-w-md bg-[#191510] border-t sm:border border-[#FFB000]/30 rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 overflow-hidden max-h-[90vh] flex flex-col"
+                        >
+                            {/* Mobile Drag Indicator */}
+                            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-3 sm:hidden" />
+
+                            {/* Header: Quoted Message Preview */}
+                            <div className="mb-4 pb-3 border-b border-[var(--border-subtle)]">
+                                <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] mb-1">
+                                    <span className="font-semibold text-[#FFB000]">
+                                        {String(selectedActionMessage.sender?._id || selectedActionMessage.sender) === String(user._id)
+                                            ? 'You'
+                                            : selectedActionMessage.sender?.name || 'Member'}
+                                    </span>
+                                    <span className="font-mono text-[10px]">
+                                        {new Date(selectedActionMessage.createdAt).toLocaleTimeString([], {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-[#FFF7EA] line-clamp-3 italic bg-black/30 p-2.5 rounded-xl border border-white/5">
+                                    "{selectedActionMessage.content}"
+                                </p>
+                            </div>
+
+                            {/* Actions List */}
+                            <div className="space-y-1.5 overflow-y-auto pr-1">
+                                {/* Standard Actions */}
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <button
+                                        onClick={() => handleCopyMessage(selectedActionMessage.content)}
+                                        className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#FFF7EA] border border-white/5 transition"
+                                    >
+                                        <FiCopy size={14} className="text-[#FF6A00]" /> Copy Text
+                                    </button>
+                                    <button
+                                        onClick={() => handleQuoteReply(selectedActionMessage)}
+                                        className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-[#FFF7EA] border border-white/5 transition"
+                                    >
+                                        <FiCornerUpLeft size={14} className="text-[#FFB000]" /> Quote & Reply
+                                    </button>
+                                </div>
+
+                                <div className="text-[10px] font-bold uppercase tracking-wider text-[#FFB000] px-1 pt-1 pb-0.5 flex items-center gap-1">
+                                    <FiZap size={11} /> AI Intelligence Actions
+                                </div>
+
+                                {/* AI Action Buttons */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setAiActionModal({
+                                                isOpen: true,
+                                                actionType: 'summarize',
+                                                message: selectedActionMessage,
+                                            });
+                                            setSelectedActionMessage(null);
+                                        }}
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-[#FF6A00]/10 to-transparent hover:from-[#FF6A00]/20 text-xs font-medium text-[#FFF7EA] border border-[#FF6A00]/25 transition"
+                                    >
+                                        <FiFileText size={14} className="text-[#FF6A00] flex-shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-semibold text-xs text-[#FFF7EA]">Summarize</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">Key points</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setAiActionModal({
+                                                isOpen: true,
+                                                actionType: 'explain',
+                                                message: selectedActionMessage,
+                                            });
+                                            setSelectedActionMessage(null);
+                                        }}
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-[#FFB000]/10 to-transparent hover:from-[#FFB000]/20 text-xs font-medium text-[#FFF7EA] border border-[#FFB000]/25 transition"
+                                    >
+                                        <FiHelpCircle size={14} className="text-[#FFB000] flex-shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-semibold text-xs text-[#FFF7EA]">Explain</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">Clarify meaning</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setAiActionModal({
+                                                isOpen: true,
+                                                actionType: 'translate',
+                                                message: selectedActionMessage,
+                                            });
+                                            setSelectedActionMessage(null);
+                                        }}
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-transparent hover:from-amber-500/20 text-xs font-medium text-[#FFF7EA] border border-amber-500/25 transition"
+                                    >
+                                        <FiGlobe size={14} className="text-amber-400 flex-shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-semibold text-xs text-[#FFF7EA]">Translate</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">Into any language</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            handleTriggerSmartReplies(selectedActionMessage);
+                                            setSelectedActionMessage(null);
+                                        }}
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-transparent hover:from-emerald-500/20 text-xs font-medium text-[#FFF7EA] border border-emerald-500/25 transition"
+                                    >
+                                        <FiMessageSquare size={14} className="text-emerald-400 flex-shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-semibold text-xs text-[#FFF7EA]">Smart Reply</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">Suggest replies</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setAiActionModal({
+                                                isOpen: true,
+                                                actionType: 'remember',
+                                                message: selectedActionMessage,
+                                            });
+                                            setSelectedActionMessage(null);
+                                        }}
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-sky-500/10 to-transparent hover:from-sky-500/20 text-xs font-medium text-[#FFF7EA] border border-sky-500/25 transition"
+                                    >
+                                        <FiBookOpen size={14} className="text-sky-400 flex-shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-semibold text-xs text-[#FFF7EA]">Remember Fact</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">Save memory</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setAiActionModal({
+                                                isOpen: true,
+                                                actionType: 'task',
+                                                message: selectedActionMessage,
+                                            });
+                                            setSelectedActionMessage(null);
+                                        }}
+                                        className="flex items-center gap-2.5 p-2.5 rounded-xl bg-gradient-to-r from-purple-500/10 to-transparent hover:from-purple-500/20 text-xs font-medium text-[#FFF7EA] border border-purple-500/25 transition"
+                                    >
+                                        <FiCheckSquare size={14} className="text-purple-400 flex-shrink-0" />
+                                        <div className="text-left">
+                                            <div className="font-semibold text-xs text-[#FFF7EA]">Extract Task</div>
+                                            <div className="text-[10px] text-[var(--text-muted)]">Add action item</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setSelectedActionMessage(null)}
+                                className="mt-4 w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[var(--text-muted)] hover:text-white transition flex items-center justify-center gap-1.5"
+                            >
+                                <FiX size={14} /> Close
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
