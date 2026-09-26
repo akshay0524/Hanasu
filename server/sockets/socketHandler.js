@@ -1,6 +1,7 @@
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const User = require('../models/User');
+const ConversationReadState = require('../models/ConversationReadState');
 
 // Track active sockets per user ID: userId (string) -> Set<socketId>
 const userSockets = new Map();
