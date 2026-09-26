@@ -3,6 +3,7 @@ import {
     getChatHistory,
     getConversationMessages,
     markConversationAsRead,
+    markMessagesAsRead,
 } from '../../services/chatApi';
 import { getCatchMeUp, getSmartReplies } from '../../services/aiApi';
 import { useAuth } from '../../context/AuthContext';
@@ -89,9 +90,16 @@ const ChatWindow = ({ chat, onBack }) => {
                     const data = await getConversationMessages(chat._id);
                     setMessages(data || []);
                     markConversationAsRead(chat._id).catch(() => {});
+                    if (socket) {
+                        socket.emit('mark_read', { readerId: user._id, conversationId: chat._id });
+                    }
                 } else {
                     const data = await getChatHistory(chat._id);
                     setMessages(data || []);
+                    markMessagesAsRead(chat._id).catch(() => {});
+                    if (socket) {
+                        socket.emit('mark_read', { readerId: user._id, friendId: chat._id });
+                    }
                 }
             } catch (err) {
                 console.error('Error loading chat messages:', err);
@@ -110,9 +118,9 @@ const ChatWindow = ({ chat, onBack }) => {
                 socket.emit('leave_conversation', chat._id);
             }
         };
-    }, [chat, isGroup, socket]);
+    }, [chat, isGroup, socket, user._id]);
 
-    // Socket message receiver
+    // Socket message receiver & real-time read receipts
     useEffect(() => {
         if (!socket || !chat) return;
 
@@ -127,6 +135,10 @@ const ChatWindow = ({ chat, onBack }) => {
                         if (exists) return prev;
                         return [...prev, newMessage];
                     });
+                    if (!isMe) {
+                        markConversationAsRead(chat._id).catch(() => {});
+                        socket.emit('mark_read', { readerId: user._id, conversationId: chat._id });
+                    }
                 }
             } else {
                 const partnerId = String(chat._id);
@@ -142,13 +154,50 @@ const ChatWindow = ({ chat, onBack }) => {
                         if (exists) return prev;
                         return [...prev, newMessage];
                     });
+                    if (senderId === partnerId) {
+                        markMessagesAsRead(partnerId).catch(() => {});
+                        socket.emit('mark_read', { readerId: user._id, friendId: partnerId });
+                    }
                 }
             }
         };
 
+        const handleMessagesRead = ({ readerId, readAt }) => {
+            if (String(readerId) === String(chat._id)) {
+                setMessages((prev) =>
+                    prev.map((m) => {
+                        const isSentByMe = String(m.sender?._id || m.sender) === String(user._id);
+                        if (isSentByMe && !m.read) {
+                            return { ...m, read: true, readAt: readAt || new Date().toISOString() };
+                        }
+                        return m;
+                    })
+                );
+            }
+        };
+
+        const handleConversationRead = ({ conversationId, readerId, lastReadAt }) => {
+            if (String(conversationId) === String(chat._id) && String(readerId) !== String(user._id)) {
+                setMessages((prev) =>
+                    prev.map((m) => {
+                        const isSentByMe = String(m.sender?._id || m.sender) === String(user._id);
+                        if (isSentByMe && !m.read) {
+                            return { ...m, read: true, readAt: lastReadAt || new Date().toISOString() };
+                        }
+                        return m;
+                    })
+                );
+            }
+        };
+
         socket.on('receive_message', handleReceiveMessage);
+        socket.on('messages_read', handleMessagesRead);
+        socket.on('conversation_read', handleConversationRead);
+
         return () => {
             socket.off('receive_message', handleReceiveMessage);
+            socket.off('messages_read', handleMessagesRead);
+            socket.off('conversation_read', handleConversationRead);
         };
     }, [socket, chat, isGroup, user._id]);
 
@@ -504,13 +553,35 @@ const ChatWindow = ({ chat, onBack }) => {
 
                                         <p className="whitespace-pre-wrap select-text">{msg.content}</p>
 
-                                        <div className="flex items-center justify-between gap-3 mt-1 opacity-75">
+                                        <div className="flex items-center justify-between gap-3 mt-1 opacity-85">
                                             <span className="text-[9px] font-mono">
                                                 {new Date(msg.createdAt).toLocaleTimeString([], {
                                                     hour: '2-digit',
                                                     minute: '2-digit',
                                                 })}
                                             </span>
+                                            {isMe && (
+                                                <span
+                                                    className="flex items-center gap-1 text-[9px] font-semibold select-none"
+                                                    title={
+                                                        msg.read
+                                                            ? `Seen ${msg.readAt ? new Date(msg.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}`
+                                                            : 'Sent'
+                                                    }
+                                                >
+                                                    {msg.read ? (
+                                                        <span className="text-[#090705] font-black flex items-center gap-0.5">
+                                                            <span className="tracking-tighter font-mono text-[10px]">✓✓</span>
+                                                            <span className="text-[8.5px] uppercase tracking-wider">Seen</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[#090705]/65 flex items-center gap-0.5 font-medium">
+                                                            <span className="font-mono text-[10px]">✓</span>
+                                                            <span className="text-[8.5px]">Sent</span>
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Context Menu Trigger Icon (Hover or tap) */}

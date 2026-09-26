@@ -582,19 +582,39 @@ const markConversationAsRead = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        // Also update direct messages for backward compatibility
-        if (conversation.type === 'direct') {
-            await Message.updateMany(
-                { conversation: conversationId, receiver: userId, read: false },
-                { $set: { read: true, readAt: new Date() } }
-            );
-        }
+        // Also update messages in conversation
+        await Message.updateMany(
+            {
+                conversation: conversationId,
+                sender: { $ne: userId },
+                read: false,
+            },
+            {
+                $set: { read: true, readAt: new Date() },
+                $addToSet: { readBy: { user: userId, readAt: new Date() } },
+            }
+        );
 
         const io = req.app.get('io');
         if (io) {
-            io.to(String(userId)).emit('conversation_read', {
-                conversationId,
+            io.to(String(conversationId)).emit('conversation_read', {
+                conversationId: String(conversationId),
+                readerId: String(userId),
                 lastReadAt: readState.lastReadAt,
+            });
+            io.to(String(conversationId)).emit('messages_read', {
+                conversationId: String(conversationId),
+                readerId: String(userId),
+                readAt: readState.lastReadAt,
+            });
+            conversation.participants.forEach((p) => {
+                if (String(p) !== String(userId)) {
+                    io.to(String(p)).emit('messages_read', {
+                        conversationId: String(conversationId),
+                        readerId: String(userId),
+                        readAt: readState.lastReadAt,
+                    });
+                }
             });
         }
 
@@ -659,6 +679,11 @@ const markMessagesAsRead = async (req, res) => {
         });
 
         if (conversation) {
+            await Message.updateMany(
+                { conversation: conversation._id, sender: friendId, read: false },
+                { $set: { read: true, readAt: new Date() } }
+            );
+
             const latestMsg = await Message.findOne({ conversation: conversation._id })
                 .sort({ createdAt: -1 })
                 .select('_id');
@@ -671,6 +696,20 @@ const markMessagesAsRead = async (req, res) => {
                 },
                 { upsert: true }
             );
+        }
+
+        const io = req.app.get('io');
+        if (io) {
+            const readEvent = {
+                readerId: String(req.user._id),
+                friendId: String(friendId),
+                readAt: new Date(),
+                conversationId: conversation ? String(conversation._id) : null,
+            };
+            io.to(String(friendId)).emit('messages_read', readEvent);
+            if (conversation) {
+                io.to(String(conversation._id)).emit('messages_read', readEvent);
+            }
         }
 
         res.json({

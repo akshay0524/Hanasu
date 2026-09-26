@@ -21,7 +21,12 @@ import {
     acceptFriendRequest,
     rejectFriendRequest,
 } from '../../services/userApi';
-import { getConversations, getUnreadCounts, markConversationAsRead } from '../../services/chatApi';
+import {
+    getConversations,
+    getUnreadCounts,
+    markConversationAsRead,
+    markMessagesAsRead,
+} from '../../services/chatApi';
 import CreateGroupModal from './CreateGroupModal';
 import MemoriesModal from './MemoriesModal';
 import TasksModal from './TasksModal';
@@ -71,7 +76,15 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             const groupList = (conversationsData || []).filter((c) => c.type === 'group');
             setGroups(groupList);
 
-            setUnread(unreadCountsData || {});
+            // Clean unread counts: if activeChat is open, it should show 0 unread
+            const cleanedUnread = { ...(unreadCountsData || {}) };
+            if (activeChat) {
+                delete cleanedUnread[String(activeChat._id)];
+                if (activeChat.conversationId) {
+                    delete cleanedUnread[String(activeChat.conversationId)];
+                }
+            }
+            setUnread(cleanedUnread);
         } catch (err) {
             console.error('Sidebar loadData error:', err);
         }
@@ -137,6 +150,16 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                     });
                     setTimeout(() => notification.close(), 4000);
                 }
+            } else if (!isMe && isCurrentChat && targetKey) {
+                // If actively viewing this chat, mark read immediately on server
+                if (activeChat.type === 'group') {
+                    markConversationAsRead(targetKey).catch(() => {});
+                } else {
+                    markMessagesAsRead(targetKey).catch(() => {});
+                    if (activeChat.conversationId) {
+                        markConversationAsRead(activeChat.conversationId).catch(() => {});
+                    }
+                }
             }
 
             // Refresh conversations list to update ordering & last message
@@ -165,16 +188,37 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
             }
         };
 
+        const handleMessagesRead = ({ readerId, friendId }) => {
+            setUnread((prev) => {
+                const next = { ...prev };
+                if (readerId) delete next[String(readerId)];
+                if (friendId) delete next[String(friendId)];
+                return next;
+            });
+        };
+
+        const handleConversationRead = ({ conversationId }) => {
+            setUnread((prev) => {
+                const next = { ...prev };
+                if (conversationId) delete next[String(conversationId)];
+                return next;
+            });
+        };
+
         socket.on('receive_message', handleMessage);
         socket.on('group_created', handleGroupCreated);
         socket.on('group_updated', handleGroupUpdated);
         socket.on('member_removed', handleMemberRemoved);
+        socket.on('messages_read', handleMessagesRead);
+        socket.on('conversation_read', handleConversationRead);
 
         return () => {
             socket.off('receive_message', handleMessage);
             socket.off('group_created', handleGroupCreated);
             socket.off('group_updated', handleGroupUpdated);
             socket.off('member_removed', handleMemberRemoved);
+            socket.off('messages_read', handleMessagesRead);
+            socket.off('conversation_read', handleConversationRead);
             window.removeEventListener('click', enableAudio);
             window.removeEventListener('keydown', enableAudio);
         };
@@ -185,18 +229,23 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
         if (!activeChat) return;
 
         const chatKey = String(activeChat._id);
-        if (unread[chatKey]) {
-            setUnread((prev) => {
-                const next = { ...prev };
-                delete next[chatKey];
-                return next;
-            });
-        }
+        setUnread((prev) => {
+            const next = { ...prev };
+            delete next[chatKey];
+            if (activeChat.conversationId) {
+                delete next[String(activeChat.conversationId)];
+            }
+            return next;
+        });
 
-        // Also mark conversation as read on server if conversationId exists
-        if (activeChat.conversationId || activeChat.type === 'group') {
-            const cId = activeChat.conversationId || activeChat._id;
-            markConversationAsRead(cId).catch(() => {});
+        // Mark conversation or messages as read on server
+        if (activeChat.type === 'group') {
+            markConversationAsRead(activeChat._id).catch(() => {});
+        } else {
+            markMessagesAsRead(activeChat._id).catch(() => {});
+            if (activeChat.conversationId) {
+                markConversationAsRead(activeChat.conversationId).catch(() => {});
+            }
         }
     }, [activeChat]);
 
@@ -410,7 +459,14 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                     return (
                                         <div
                                             key={group._id}
-                                            onClick={() => onSelectChat({ type: 'group', ...group })}
+                                            onClick={() => {
+                                                setUnread((prev) => {
+                                                    const next = { ...prev };
+                                                    delete next[String(group._id)];
+                                                    return next;
+                                                });
+                                                onSelectChat({ type: 'group', ...group });
+                                            }}
                                             className={`p-2.5 rounded-xl flex items-center gap-3 cursor-pointer transition-all border relative ${
                                                 isSelected
                                                     ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.1)]'
@@ -476,7 +532,14 @@ const Sidebar = ({ onSelectChat, activeChat }) => {
                                         return (
                                             <div
                                                 key={friend._id}
-                                                onClick={() => onSelectChat({ type: 'friend', ...friend })}
+                                                onClick={() => {
+                                                    setUnread((prev) => {
+                                                        const next = { ...prev };
+                                                        delete next[String(friend._id)];
+                                                        return next;
+                                                    });
+                                                    onSelectChat({ type: 'friend', ...friend });
+                                                }}
                                                 className={`p-2.5 rounded-xl flex items-center gap-3 cursor-pointer transition-all border relative ${
                                                     isSelected
                                                         ? 'bg-[#191510] border-[#FFB000]/50 shadow-[0_0_16px_rgba(255,106,0,0.1)]'

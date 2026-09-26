@@ -110,17 +110,80 @@ const socketHandler = (io) => {
                     .populate('sender', 'name userTag avatar')
                     .lean();
 
-                // Broadcast to conversation room
-                io.to(String(targetConversationId)).emit('receive_message', populatedMessage);
-
-                // Also emit to all participants' user rooms (so unread counts update in sidebar)
-                convDoc.participants.forEach((participantId) => {
-                    const pidStr = String(participantId);
-                    // Avoid duplicate if socket is already in conversation room
-                    io.to(pidStr).emit('receive_message', populatedMessage);
-                });
+                // Broadcast to conversation room AND all participant user rooms in a single emit so Socket.IO deduplicates
+                const targetRooms = Array.from(
+                    new Set([
+                        String(targetConversationId),
+                        ...convDoc.participants.map((p) => String(p)),
+                    ])
+                );
+                io.to(targetRooms).emit('receive_message', populatedMessage);
             } catch (error) {
                 console.error('Error saving/sending message in socket:', error);
+            }
+        });
+
+        // Real-time Read Receipts
+        socket.on('mark_read', async (data) => {
+            const { readerId, friendId, conversationId } = data || {};
+            const rId = readerId || socket.userId;
+            if (!rId) return;
+
+            try {
+                if (friendId) {
+                    await Message.updateMany(
+                        { sender: friendId, receiver: rId, read: false },
+                        { $set: { read: true, readAt: new Date() } }
+                    );
+
+                    const conversation = await Conversation.findOne({
+                        type: 'direct',
+                        participants: { $all: [rId, friendId], $size: 2 },
+                    });
+                    if (conversation) {
+                        await Message.updateMany(
+                            { conversation: conversation._id, sender: friendId, read: false },
+                            { $set: { read: true, readAt: new Date() } }
+                        );
+                        await ConversationReadState.findOneAndUpdate(
+                            { user: rId, conversation: conversation._id },
+                            { lastReadAt: new Date() },
+                            { upsert: true }
+                        );
+                    }
+
+                    // Notify sender in real time
+                    io.to(String(friendId)).emit('messages_read', {
+                        readerId: String(rId),
+                        friendId: String(friendId),
+                        readAt: new Date(),
+                        conversationId: conversation ? String(conversation._id) : null,
+                    });
+                }
+
+                if (conversationId) {
+                    await ConversationReadState.findOneAndUpdate(
+                        { user: rId, conversation: conversationId },
+                        { lastReadAt: new Date() },
+                        { upsert: true }
+                    );
+                    await Message.updateMany(
+                        { conversation: conversationId, sender: { $ne: rId }, read: false },
+                        { $set: { read: true, readAt: new Date() } }
+                    );
+                    io.to(String(conversationId)).emit('conversation_read', {
+                        conversationId: String(conversationId),
+                        readerId: String(rId),
+                        lastReadAt: new Date(),
+                    });
+                    io.to(String(conversationId)).emit('messages_read', {
+                        conversationId: String(conversationId),
+                        readerId: String(rId),
+                        readAt: new Date(),
+                    });
+                }
+            } catch (err) {
+                console.error('Error handling mark_read in socket:', err.message);
             }
         });
 
