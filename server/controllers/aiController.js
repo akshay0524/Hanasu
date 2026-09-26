@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const User = require('../models/User');
 const AIChat = require('../models/AIChat');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
@@ -13,6 +15,7 @@ const SYSTEM_PROMPT =
 // Helper to verify user has access to a message
 const verifyMessageAccess = async (userId, messageId) => {
     if (!messageId) return true; // Direct content analysis
+    if (!mongoose.Types.ObjectId.isValid(messageId)) return false;
     const message = await Message.findById(messageId);
     if (!message) return false;
 
@@ -38,7 +41,23 @@ const getCatchMeUp = async (req, res) => {
         const { conversationId } = req.params;
         const userId = req.user._id;
 
-        const conversation = await Conversation.findById(conversationId);
+        if (!conversationId || !mongoose.Types.ObjectId.isValid(conversationId)) {
+            return res.status(400).json({ message: 'Invalid conversation ID' });
+        }
+
+        let conversation = await Conversation.findById(conversationId);
+
+        // If not found by conversation ID, check if it's a direct friend's user ID
+        if (!conversation) {
+            conversation = await Conversation.findOne({
+                type: 'direct',
+                participants: { $all: [userId, conversationId], $size: 2 },
+            });
+            if (!conversation) {
+                conversation = await Conversation.getOrCreate(userId, conversationId);
+            }
+        }
+
         if (!conversation) {
             return res.status(404).json({ message: 'Conversation not found' });
         }
@@ -51,30 +70,75 @@ const getCatchMeUp = async (req, res) => {
         // Fetch user's read state
         const readState = await ConversationReadState.findOne({
             user: userId,
-            conversation: conversationId,
+            conversation: conversation._id,
         });
 
+        const otherParticipant = conversation.participants.find(
+            (p) => String(p) !== String(userId)
+        );
+
+        const baseMatch = {
+            $or: [
+                { conversation: conversation._id },
+                ...(otherParticipant
+                    ? [
+                          { sender: userId, receiver: otherParticipant },
+                          { sender: otherParticipant, receiver: userId },
+                      ]
+                    : []),
+            ],
+        };
+
+        // Query unread messages
         const unreadQuery = {
-            conversation: conversationId,
+            ...baseMatch,
             sender: { $ne: userId },
         };
 
         if (readState && readState.lastReadAt) {
             unreadQuery.createdAt = { $gt: readState.lastReadAt };
+        } else {
+            unreadQuery.read = false;
         }
 
-        const unreadMessages = await Message.find(unreadQuery)
+        let unreadMessages = await Message.find(unreadQuery)
             .populate('sender', 'name userTag')
             .sort({ createdAt: 1 })
             .lean();
 
-        const convName = conversation.type === 'group'
-            ? conversation.name || 'Group Chat'
-            : 'Direct Conversation';
+        const actualUnreadCount = unreadMessages.length;
 
-        const result = await aiService.catchMeUp(unreadMessages, convName, conversationId);
+        // If no unread messages (e.g. user just opened chat), provide context from recent messages (up to 20)
+        let messagesToSummarize = unreadMessages;
+        if (messagesToSummarize.length === 0) {
+            messagesToSummarize = await Message.find(baseMatch)
+                .populate('sender', 'name userTag')
+                .sort({ createdAt: -1 })
+                .limit(20)
+                .lean();
+            messagesToSummarize.reverse();
+        }
 
-        res.json(result);
+        let convName =
+            conversation.type === 'group'
+                ? conversation.name || 'Group Chat'
+                : 'Direct Conversation';
+
+        if (conversation.type === 'direct' && otherParticipant) {
+            const partnerUser = await User.findById(otherParticipant).select('name');
+            if (partnerUser) convName = partnerUser.name;
+        }
+
+        const result = await aiService.catchMeUp(
+            messagesToSummarize,
+            convName,
+            String(conversation._id)
+        );
+
+        res.json({
+            ...result,
+            unreadCount: actualUnreadCount,
+        });
     } catch (error) {
         console.error('getCatchMeUp error:', error);
         res.status(500).json({ message: error.message });
